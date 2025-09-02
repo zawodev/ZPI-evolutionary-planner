@@ -1,5 +1,6 @@
 # Kompilacja C++ z CMake + Visual Studio stuff
 **/.vs/
+**/.vscode/
 **/bin/
 **/build/
 **/cmake-build*/

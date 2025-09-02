@@ -1,6 +1,7 @@
 #pragma once
 #include "model/ProblemData.hpp"
 #include <memory>
+#include <string>
 
 class EventReceiver {
 public:

@@ -1,16 +1,23 @@
 #pragma once
-#include "model/Genotype.hpp"
+#include "model/Individual.hpp"
 #include "model/ProblemData.hpp"
 #include "optimization/Evaluator.hpp"
-#include <memory>
 
 class IGeneticAlgorithm {
 public:
     virtual ~IGeneticAlgorithm() = default;
-    virtual Genotype run(const ProblemData& data, const Evaluator& evaluator, int maxGenerations) = 0;
+    virtual void Init(const ProblemData& data, const Evaluator& evaluator) = 0;
+    virtual Individual RunIteration(int currentIteration) = 0;
 };
 
 class SimpleGeneticAlgorithm : public IGeneticAlgorithm {
 public:
-    Genotype run(const ProblemData& data, const Evaluator& evaluator, int maxGenerations) override;
+    void Init(const ProblemData& data, const Evaluator& evaluator) override;
+    Individual RunIteration(int currentIteration) override;
+private:
+    const ProblemData* problemData = nullptr;
+    const Evaluator* evaluator = nullptr;
+    bool initialized = false;
+
+    Individual bestGenotype;
 };

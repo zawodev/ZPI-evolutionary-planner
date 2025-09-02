@@ -1,9 +1,10 @@
 #pragma once
-#include "model/Genotype.hpp"
+#include "model/Individual.hpp"
 #include "model/ProblemData.hpp"
+#include <string>
 
 class JsonParser {
 public:
     static ProblemData parseInput(const std::string& filename);
-    static void writeOutput(const std::string& filename, const Genotype& genotype);
+    static void writeOutput(const std::string& filename, const Individual& individual, const ProblemData& data);
 };
