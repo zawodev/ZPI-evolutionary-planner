@@ -1,0 +1,96 @@
+{
+  "constraints": {
+    "timeslots_per_day": [ 7, 7, 7, 7, 7, 0, 0 ],
+    "groups_per_subject": [ 3, 5, 2, 3 ],
+    "students_subjects": [
+      [ 0, 1, 2 ],
+      [ 1, 2, 3 ],
+      [ 0, 2, 3 ]
+    ],
+    "teachers_groups": [
+      [ 0, 1 ],
+      [ 2, 3, 4 ],
+      [ 5, 6 ]
+    ],
+    "rooms_unavailability": [
+      [ 12, 13 ],
+      [ 5, 6, 7 ],
+      []
+    ]
+  },
+  "preferences": {
+    "students": [
+      {
+        "free_days": [
+          { "0": 5 },
+          { "2": 3 }
+        ],
+        "busy_days": [ { "1": 2 } ],
+        "gaps": {
+          "value": false,
+          "weight": 4
+        },
+        "preferred_groups": [
+          { "1": 4 },
+          { "2": 2 }
+        ],
+        "avoid_groups": [ { "3": 2 } ],
+        "preferred_timeslots": [
+          { "5": 3 },
+          { "6": 1 }
+        ],
+        "avoid_timeslots": [ { "7": 2 } ]
+      },
+      {
+        "free_days": [ { "1": 2 } ],
+        "busy_days": [ { "0": 1 } ],
+        "gaps": {
+          "value": true,
+          "weight": 2
+        },
+        "preferred_groups": [ { "2": 2 } ],
+        "avoid_groups": [ { "3": 2 } ],
+        "preferred_timeslots": [ { "7": 2 } ],
+        "avoid_timeslots": [ { "4": 2 } ]
+      }
+    ],
+    "teachers": [
+      {
+        "free_days": [ { "0": 2 } ],
+        "busy_days": [ { "1": 1 } ],
+        "gaps": {
+          "value": false,
+          "weight": 3
+        },
+        "preferred_timeslots": [ { "5": 2 } ],
+        "avoid_timeslots": [ { "6": 1 } ]
+      },
+      {
+        "free_days": [ { "2": 1 } ],
+        "busy_days": [ { "3": 2 } ],
+        "gaps": {
+          "value": true,
+          "weight": 1
+        },
+        "preferred_timeslots": [ { "6": 3 } ],
+        "avoid_timeslots": [ { "6": 1 } ]
+      }
+    ],
+    "management": {
+      "prefer": [
+        {
+          "room": 0,
+          "timeslot": 1,
+          "weight": 2
+        }
+      ],
+      "avoid": [
+        {
+          "room": 2,
+          "timeslot": 4,
+          "weight": 3
+        }
+      ]
+    }
+  }
+}
