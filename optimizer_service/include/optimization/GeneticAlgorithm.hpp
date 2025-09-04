@@ -6,13 +6,13 @@
 class IGeneticAlgorithm {
 public:
     virtual ~IGeneticAlgorithm() = default;
-    virtual void Init(const ProblemData& data, const Evaluator& evaluator) = 0;
+    virtual void Init(const ProblemData& data, const Evaluator& evaluator, int seed = std::random_device{}()) = 0;
     virtual Individual RunIteration(int currentIteration) = 0;
 };
 
 class SimpleGeneticAlgorithm : public IGeneticAlgorithm {
 public:
-    void Init(const ProblemData& data, const Evaluator& evaluator) override;
+    void Init(const ProblemData& data, const Evaluator& evaluator, int seed = std::random_device{}()) override;
     Individual RunIteration(int currentIteration) override;
 private:
     const ProblemData* problemData = nullptr;
@@ -20,4 +20,5 @@ private:
     bool initialized = false;
 
     Individual bestIndividual;
+    std::mt19937 rng;
 };

@@ -12,11 +12,12 @@ int main() {
         // Example usage of TestCaseGenerator (for future random test case generation):
         // #include "utils/TestCaseGenerator.hpp"
         // TestCaseGenerator generator;
-        // ProblemData testData = generator.generate(100, 50, 20, 10, 5); // numStudents, numGroups, numSubjects, numRooms, numTimeslots
+        // RawProblemData testData = generator.generate(100, 50, 20, 10, 5); // numStudents, numGroups, numSubjects, numRooms, numTimeslots
         // Then use testData instead of receiver.receive()
 
         FileEventReceiver receiver("data/input.json");
-        ProblemData data = receiver.receive();
+        RawProblemData rawData = receiver.receive();
+        ProblemData data(rawData);
         std::string debugMsg = "Received ProblemData with " + std::to_string(data.getStudentsNum()) + " students, " +
                                std::to_string(data.getGroupsNum()) + " groups, " +
                                std::to_string(data.getSubjectsNum()) + " subjects, " +
@@ -31,7 +32,7 @@ int main() {
         geneticAlgorithm->Init(data, evaluator);
         Logger::info("Genetic algorithm initialization complete. Starting iterations...");
         
-        for (int i = 0; i < 10; ++i) {
+        for (int i = 0; i < 3; ++i) {
             bestIndividual = geneticAlgorithm->RunIteration(i);
             Logger::info("Iteration " + std::to_string(i) + ", fitness: " + std::to_string(bestIndividual.fitness));
         }

@@ -1,6 +1,7 @@
 #include "optimization/Evaluator.hpp"
 #include "utils/Logger.hpp"
 #include <random>
+#include <set>
 
 Evaluator::Evaluator(const ProblemData& data) : problemData(data) {
     buildMaxValues();
@@ -15,8 +16,8 @@ void Evaluator::buildMaxValues() {
 
     // Student part: for each subject of each student, max = groups_per_subject[p] - 1
     for (int s = 0; s < studentsNum; ++s) {
-        for (int p : problemData.students_subjects[s]) {
-            int max_val = problemData.groups_per_subject[p] - 1;
+        for (int p : problemData.getStudentsSubjects()[s]) {
+            int max_val = problemData.getGroupsPerSubject()[p] - 1;
             maxValues.push_back(max_val);
         }
     }
@@ -38,11 +39,225 @@ void Evaluator::buildMaxValues() {
     Logger::info("Total genes: " + std::to_string(maxValues.size()));
 }
 
-double Evaluator::evaluate(const Individual& genotype) const {
-    // Mock: random fitness for now we will change it later (maybe)
-    static std::mt19937 rng{std::random_device{}()};
-    static std::uniform_real_distribution<double> dist(0.0, 1.0);
-    return dist(rng);
+double Evaluator::evaluate(const Individual& individual) const {
+    int expected_size = getTotalGenes();
+    if (individual.genotype.size() != expected_size) {
+        Logger::error("Invalid genotype size: " + std::to_string(individual.genotype.size()) + ", expected: " + std::to_string(expected_size));
+        return 0.0;
+    }
+
+    // Decode genotype
+    std::vector<std::vector<int>> student_groups(problemData.getStudentsNum());
+    int idx = 0;
+    for (int s = 0; s < problemData.getStudentsNum(); ++s) {
+        for (size_t i = 0; i < problemData.getStudentsSubjects()[s].size(); ++i) {
+            int rel_group = individual.genotype[idx];
+            int abs_group = problemData.getAbsoluteGroupIndex(idx, rel_group);
+            student_groups[s].push_back(abs_group);
+            idx++;
+        }
+    }
+
+    std::vector<std::pair<int, int>> group_assignments(problemData.getGroupsNum());
+    for (int g = 0; g < problemData.getGroupsNum(); ++g) {
+        int timeslot = individual.genotype[idx++];
+        int room = individual.genotype[idx++];
+        group_assignments[g] = {timeslot, room};
+    }
+
+    // Calculate cumulative timeslots for days
+    std::vector<int> cum_timeslots(problemData.getDaysNum() + 1, 0);
+    for (int d = 1; d <= problemData.getDaysNum(); ++d) {
+        cum_timeslots[d] = cum_timeslots[d - 1] + problemData.getTimeslotsPerDay()[d - 1];
+    }
+
+    // Evaluate students
+    double total_student_fitness = 0.0;
+    for (int s = 0; s < problemData.getStudentsNum(); ++s) {
+        double student_fitness = 0.0;
+        double student_total_weight = 0.0;
+        const auto& pref = problemData.getStudentsPreferences()[s];
+
+        // Get student timeslots
+        std::set<int> student_timeslots;
+        for (int g : student_groups[s]) {
+            int timeslot = group_assignments[g].first;
+            student_timeslots.insert(timeslot);
+        }
+
+        // free_days
+        for (int d = 0; d < (int)pref.free_days.size(); ++d) {
+            int weight = pref.free_days[d];
+            if (weight > 0) {
+                bool has_class = false;
+                for (int t = cum_timeslots[d]; t < cum_timeslots[d + 1]; ++t) {
+                    if (student_timeslots.count(t)) has_class = true;
+                }
+                if (!has_class) student_fitness += weight;
+                student_total_weight += weight;
+            }
+        }
+
+        // busy_days
+        for (int d = 0; d < (int)pref.busy_days.size(); ++d) {
+            int weight = pref.busy_days[d];
+            if (weight > 0) {
+                bool has_class = false;
+                for (int t = cum_timeslots[d]; t < cum_timeslots[d + 1]; ++t) {
+                    if (student_timeslots.count(t)) has_class = true;
+                }
+                if (has_class) student_fitness += weight;
+                student_total_weight += weight;
+            }
+        }
+
+        // gaps (simplified)
+        if (pref.gaps.weight > 0) {
+            int days_with_class = 0;
+            for (int d = 0; d < problemData.getDaysNum(); ++d) {
+                bool has = false;
+                for (int t = cum_timeslots[d]; t < cum_timeslots[d + 1]; ++t) {
+                    if (student_timeslots.count(t)) has = true;
+                }
+                if (has) days_with_class++;
+            }
+            if (days_with_class >= 2) {
+                if (pref.gaps.value) student_fitness += pref.gaps.weight;
+                student_total_weight += pref.gaps.weight;
+            }
+        }
+
+        if (student_total_weight > 0) {
+            total_student_fitness += student_fitness / student_total_weight;
+        }
+    }
+    double avg_student_fitness = total_student_fitness / problemData.getStudentsNum();
+
+    // Evaluate teachers
+    double total_teacher_fitness = 0.0;
+    for (int t = 0; t < problemData.getTeachersNum(); ++t) {
+        double teacher_fitness = 0.0;
+        double teacher_total_weight = 0.0;
+        const auto& pref = problemData.getTeachersPreferences()[t];
+
+        // Get teacher timeslots
+        std::set<int> teacher_timeslots;
+        for (int g : problemData.getTeachersGroups()[t]) {
+            int timeslot = group_assignments[g].first;
+            teacher_timeslots.insert(timeslot);
+        }
+
+        // free_days
+        for (int d = 0; d < (int)pref.free_days.size(); ++d) {
+            int weight = pref.free_days[d];
+            if (weight > 0) {
+                bool has_class = false;
+                for (int ts = cum_timeslots[d]; ts < cum_timeslots[d + 1]; ++ts) {
+                    if (teacher_timeslots.count(ts)) has_class = true;
+                }
+                if (!has_class) teacher_fitness += weight;
+                teacher_total_weight += weight;
+            }
+        }
+
+        // busy_days
+        for (int d = 0; d < (int)pref.busy_days.size(); ++d) {
+            int weight = pref.busy_days[d];
+            if (weight > 0) {
+                bool has_class = false;
+                for (int ts = cum_timeslots[d]; ts < cum_timeslots[d + 1]; ++ts) {
+                    if (teacher_timeslots.count(ts)) has_class = true;
+                }
+                if (has_class) teacher_fitness += weight;
+                teacher_total_weight += weight;
+            }
+        }
+
+        // gaps (simplified)
+        if (pref.gaps.weight > 0) {
+            int days_with_class = 0;
+            for (int d = 0; d < problemData.getDaysNum(); ++d) {
+                bool has = false;
+                for (int ts = cum_timeslots[d]; ts < cum_timeslots[d + 1]; ++ts) {
+                    if (teacher_timeslots.count(ts)) has = true;
+                }
+                if (has) days_with_class++;
+            }
+            if (days_with_class >= 2) {
+                if (pref.gaps.value) teacher_fitness += pref.gaps.weight;
+                teacher_total_weight += pref.gaps.weight;
+            }
+        }
+
+        // preferred_timeslots
+        for (const auto& map : pref.preferred_timeslots) {
+            for (const auto& pair : map) {
+                int timeslot = pair.first;
+                int weight = pair.second;
+                if (teacher_timeslots.count(timeslot)) teacher_fitness += weight;
+                teacher_total_weight += weight;
+            }
+        }
+
+        // avoid_timeslots
+        for (const auto& map : pref.avoid_timeslots) {
+            for (const auto& pair : map) {
+                int timeslot = pair.first;
+                int weight = pair.second;
+                if (!teacher_timeslots.count(timeslot)) teacher_fitness += weight;
+                teacher_total_weight += weight;
+            }
+        }
+
+        if (teacher_total_weight > 0) {
+            total_teacher_fitness += teacher_fitness / teacher_total_weight;
+        }
+    }
+    double avg_teacher_fitness = total_teacher_fitness / problemData.getTeachersNum();
+
+    // Evaluate management
+    double management_fitness = 0.0;
+    double management_total_weight = 0.0;
+    const auto& pref = problemData.getManagementPreferences();
+
+    // preferred_room_timeslots
+    for (const auto& prt : pref.preferred_room_timeslots) {
+        bool satisfied = false;
+        for (int g = 0; g < problemData.getGroupsNum(); ++g) {
+            if (group_assignments[g].first == prt.timeslot && group_assignments[g].second == prt.room) {
+                satisfied = true;
+                break;
+            }
+        }
+        if (satisfied) management_fitness += prt.weight;
+        management_total_weight += prt.weight;
+    }
+
+    // avoid_room_timeslots
+    for (const auto& art : pref.avoid_room_timeslots) {
+        bool violated = false;
+        for (int g = 0; g < problemData.getGroupsNum(); ++g) {
+            if (group_assignments[g].first == art.timeslot && group_assignments[g].second == art.room) {
+                violated = true;
+                break;
+            }
+        }
+        if (!violated) management_fitness += art.weight;
+        management_total_weight += art.weight;
+    }
+
+    // group_max_overflow (simplified: assume no overflow for now)
+    if (pref.group_max_overflow.weight > 0) {
+        // For simplicity, always add if value == 0 (no overflow preferred)
+        if (pref.group_max_overflow.value == 0) management_fitness += pref.group_max_overflow.weight;
+        management_total_weight += pref.group_max_overflow.weight;
+    }
+
+    double avg_management_fitness = (management_total_weight > 0) ? (management_fitness / management_total_weight) : 1.0;
+
+    // Average all
+    double total_fitness = (avg_student_fitness + avg_teacher_fitness + avg_management_fitness) / 3.0;
+    return total_fitness;
 }
 
 int Evaluator::getMaxGeneValue(int geneIdx) const {
@@ -50,14 +265,15 @@ int Evaluator::getMaxGeneValue(int geneIdx) const {
 }
 
 std::pair<bool, Individual> Evaluator::repair(const Individual& individual) const {
-    Individual repaired = individual;
+    Individual repaired = individual; //remember this need to be a copy, not a reference (Individual does not have copy constructor right now)
     bool isValid = true;
 
+    /*
     // Calculate subject student counts
     std::vector<int> subject_student_counts(problemData.getSubjectsNum(), 0);
     int idx = 0;
     for (int s = 0; s < problemData.getStudentsNum(); ++s) {
-        for (int p : problemData.students_subjects[s]) {
+        for (int p : problemData.getStudentsSubjects()[s]) {
             int rel_gen = repaired.genotype[idx++];
             subject_student_counts[p]++;
         }
@@ -73,7 +289,19 @@ std::pair<bool, Individual> Evaluator::repair(const Individual& individual) cons
             // Note: Actual genotype modification would require tracking which genes to change (sounds complex to me lol)
         }
     }
-
+    */
     // For now, return repaired as is (since actual repair is pretty complex at least for current state of this framework)
     return {isValid, repaired};
+}
+
+void Evaluator::initRandom(Individual& individual, std::mt19937& rng) const {
+    individual.genotype.clear();
+    for (int i = 0; i < getTotalGenes(); ++i) {
+        individual.genotype.push_back(rng() % (getMaxGeneValue(i) + 1));
+    }
+
+    auto [isValid, repaired] = repair(individual);
+    if (!isValid) {
+        individual = repaired;
+    }
 }

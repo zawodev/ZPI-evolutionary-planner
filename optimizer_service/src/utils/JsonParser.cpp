@@ -22,10 +22,10 @@ static std::vector<std::map<int, int>> parse_pref_array(const json& arr) {
     return out;
 }
 
-static std::vector<ManagementRoomTimeslot> parse_management_room_timeslots(const json& arr) {
-    std::vector<ManagementRoomTimeslot> out;
+static std::vector<RoomTimeslotPreference> parse_management_room_timeslots(const json& arr) {
+    std::vector<RoomTimeslotPreference> out;
     for (const auto& m : arr) {
-        ManagementRoomTimeslot mp;
+        RoomTimeslotPreference mp;
         mp.room = m["room"].get<int>();
         mp.timeslot = m["timeslot"].get<int>();
         mp.weight = m["weight"].get<int>();
@@ -34,7 +34,7 @@ static std::vector<ManagementRoomTimeslot> parse_management_room_timeslots(const
     return out;
 }
 
-ProblemData JsonParser::parseInput(const std::string& filename) {
+RawProblemData JsonParser::parseInput(const std::string& filename) {
     try {
         std::ifstream in(filename);
         if (!in) {
@@ -42,7 +42,7 @@ ProblemData JsonParser::parseInput(const std::string& filename) {
         }
         json j;
         in >> j;
-        ProblemData data;
+        RawProblemData data;
         // constraints
         const auto& c = j.at("constraints");
         data.timeslots_per_day = c.at("timeslots_per_day").get<std::vector<int>>();

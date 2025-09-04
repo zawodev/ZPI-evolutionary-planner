@@ -20,20 +20,20 @@ struct TeacherPreference {
     std::vector<std::map<int, int>> avoid_timeslots;
 };
 
-struct ManagementRoomTimeslot {
+struct RoomTimeslotPreference {
     int room;
     int timeslot;
     int weight;
 };
 
 struct ManagementPreferences {
-    std::vector<ManagementRoomTimeslot> preferred_room_timeslots;
-    std::vector<ManagementRoomTimeslot> avoid_room_timeslots;
+    std::vector<RoomTimeslotPreference> preferred_room_timeslots;
+    std::vector<RoomTimeslotPreference> avoid_room_timeslots;
     struct { int value; int weight; } group_max_overflow;
 };
 
-struct ProblemData {
-    // Constraints
+struct RawProblemData {
+    //Constraints
     std::vector<int> timeslots_per_day;
     std::vector<int> groups_per_subject;
     std::vector<int> groups_soft_capacity;
@@ -41,48 +41,52 @@ struct ProblemData {
     std::vector<std::vector<int>> teachers_groups;
     std::vector<std::vector<int>> rooms_unavailability_timeslots;
 
-    // Preferences
+    //Preferences
     std::vector<StudentPreference> students_preferences;
     std::vector<TeacherPreference> teachers_preferences;
     ManagementPreferences management_preferences;
+};
 
-    // Calculated fields
-    int getDaysNum() const { return timeslots_per_day.size(); }
-    int getSubjectsNum() const { return groups_per_subject.size(); }
-    int getGroupsNum() const { return groups_soft_capacity.size(); }
-    int getStudentsNum() const { return students_subjects.size(); }
-    int getTeachersNum() const { return teachers_groups.size(); }
-    int getRoomsNum() const { return rooms_unavailability_timeslots.size(); }
-    int getGroupsForStudent(int studentId) const { return students_subjects[studentId].size(); }
+class ProblemData {
+private:
+    RawProblemData _rawData;
 
-    // Lazy calculation of total timeslots
-    mutable int total_timeslots = 0;
-    mutable bool total_timeslots_calculated = false;
+    int _total_timeslots;
+    int _total_student_subjects;
+    std::vector<int> _subject_total_capacity;
+    std::vector<int> _cumulative_groups;
+    std::vector<int> _student_weights_sums;
 
-    int totalTimeslots() const {
-        if (!total_timeslots_calculated) {
-            total_timeslots = 0;
-            for (int t : timeslots_per_day) total_timeslots += t;
-            total_timeslots_calculated = true;
-        }
-        return total_timeslots;
-    }
+public:
+    ProblemData(const RawProblemData& input_data);
 
-    // Lazy calculation of subject total capacities
-    mutable std::vector<int> subject_total_capacity;
-    mutable bool subject_total_capacity_calculated = false;
+    // getters for raw data
+    const std::vector<int>& getTimeslotsPerDay() const { return _rawData.timeslots_per_day; }
+    const std::vector<int>& getGroupsPerSubject() const { return _rawData.groups_per_subject; }
+    const std::vector<int>& getGroupsSoftCapacity() const { return _rawData.groups_soft_capacity; }
+    const std::vector<std::vector<int>>& getStudentsSubjects() const { return _rawData.students_subjects; }
+    const std::vector<std::vector<int>>& getTeachersGroups() const { return _rawData.teachers_groups; }
+    const std::vector<std::vector<int>>& getRoomsUnavailabilityTimeslots() const { return _rawData.rooms_unavailability_timeslots; }
+    const std::vector<StudentPreference>& getStudentsPreferences() const { return _rawData.students_preferences; }
+    const std::vector<TeacherPreference>& getTeachersPreferences() const { return _rawData.teachers_preferences; }
+    const ManagementPreferences& getManagementPreferences() const { return _rawData.management_preferences; }
 
-    const std::vector<int>& getSubjectTotalCapacity() const {
-        if (!subject_total_capacity_calculated) {
-            subject_total_capacity.resize(getSubjectsNum(), 0);
-            int group_idx = 0;
-            for (int p = 0; p < getSubjectsNum(); ++p) {
-                for (int g = 0; g < groups_per_subject[p]; ++g) {
-                    subject_total_capacity[p] += groups_soft_capacity[group_idx++];
-                }
-            }
-            subject_total_capacity_calculated = true;
-        }
-        return subject_total_capacity;
-    }
+    // calculated fields
+    int getDaysNum() const { return (int)_rawData.timeslots_per_day.size(); }
+    int getSubjectsNum() const { return (int)_rawData.groups_per_subject.size(); }
+    int getGroupsNum() const { return (int)_rawData.groups_soft_capacity.size(); }
+    int getStudentsNum() const { return (int)_rawData.students_subjects.size(); }
+    int getTeachersNum() const { return (int)_rawData.teachers_groups.size(); }
+    int getRoomsNum() const { return (int)_rawData.rooms_unavailability_timeslots.size(); }
+    int getGroupsForStudent(int studentId) const { return (int)_rawData.students_subjects[studentId].size(); }
+
+    int totalTimeslots() const { return _total_timeslots; }
+    int getTotalStudentSubjects() const { return _total_student_subjects; }
+    const std::vector<int>& getSubjectTotalCapacity() const { return _subject_total_capacity; }
+    const std::vector<int>& getCumulativeGroups() const { return _cumulative_groups; }
+    const std::vector<int>& getStudentWeightsSums() const { return _student_weights_sums; }
+
+    // more complex functions
+    int getAbsoluteGroupIndex(int idx_genu, int rel_group) const;
+    int getDayFromTimeslot(int timeslot) const;
 };
