@@ -1,9 +1,11 @@
 #include "utils/JsonParser.hpp"
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include "utils/Logger.hpp"
 #include <iostream>
 #include <stdexcept>
 #include <filesystem>
+#include "optimization/Evaluator.hpp"
 
 using json = nlohmann::json;
 namespace fs = std::filesystem;
@@ -95,7 +97,7 @@ ProblemData JsonParser::parseInput(const std::string& filename) {
     }
 }
 
-void JsonParser::writeOutput(const std::string& filename, const Individual& individual, const ProblemData& data) {
+void JsonParser::writeOutput(const std::string& filename, const Individual& individual, const ProblemData& data, const Evaluator& evaluator) {
     try {
         fs::path outPath(filename);
         if (!outPath.parent_path().empty() && !fs::exists(outPath.parent_path())) {
@@ -108,6 +110,12 @@ void JsonParser::writeOutput(const std::string& filename, const Individual& indi
         json j;
         int studentsNum = data.getStudentsNum();
         int groupsNum = data.getGroupsNum();
+
+        // Validate genotype size
+        int expected_size = evaluator.getTotalGenes();
+        if (individual.genotype.size() != expected_size) {
+            throw std::runtime_error("Invalid genotype size: " + std::to_string(individual.genotype.size()) + ", expected: " + std::to_string(expected_size));
+        }
 
         std::vector<std::vector<int>> by_student;
         int idx = 0;

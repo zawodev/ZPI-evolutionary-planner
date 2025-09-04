@@ -7,6 +7,7 @@ public:
     explicit Evaluator(const ProblemData& data);
     double evaluate(const Individual& genotype) const;
     int getMaxGeneValue(int geneIdx) const;
+    int getTotalGenes() const { return maxValues.size(); }
     std::pair<bool, Individual> repair(const Individual& individual) const;
 private:
     void buildMaxValues();

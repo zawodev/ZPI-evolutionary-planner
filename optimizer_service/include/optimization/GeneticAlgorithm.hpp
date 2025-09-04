@@ -19,5 +19,5 @@ private:
     const Evaluator* evaluator = nullptr;
     bool initialized = false;
 
-    Individual bestGenotype;
+    Individual bestIndividual;
 };

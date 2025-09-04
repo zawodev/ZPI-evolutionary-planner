@@ -13,6 +13,10 @@ private:
     static constexpr const char* CYAN    = "\033[36m";
     static constexpr const char* WHITE   = "\033[37m";
 public:
+    static void debug(const std::string& msg) {
+        std::cout << GREEN << "[DEBUG]" << RESET << " " << msg << std::endl;
+    }
+
     static void info(const std::string& msg) {
         std::cout << YELLOW << "[INFO]" << RESET << " " << msg << std::endl;
     }

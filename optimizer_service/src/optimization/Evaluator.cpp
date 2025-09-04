@@ -29,9 +29,12 @@ void Evaluator::buildMaxValues() {
 
     //print maxValues for debugging (with logger info)
     Logger::info("Evaluator initialized. Max gene values:");
+    std::string str = "[";
     for (size_t i = 0; i < maxValues.size(); ++i) {
-        Logger::info(std::to_string(maxValues[i]));
+        str += std::to_string(maxValues[i]) + (i < maxValues.size() - 1 ? ", " : "");
     }
+    str += "]";
+    Logger::info(str);
     Logger::info("Total genes: " + std::to_string(maxValues.size()));
 }
 
@@ -48,7 +51,7 @@ int Evaluator::getMaxGeneValue(int geneIdx) const {
 
 std::pair<bool, Individual> Evaluator::repair(const Individual& individual) const {
     Individual repaired = individual;
-    bool wasRepaired = false;
+    bool isValid = true;
 
     // Calculate subject student counts
     std::vector<int> subject_student_counts(problemData.getSubjectsNum(), 0);
@@ -66,11 +69,11 @@ std::pair<bool, Individual> Evaluator::repair(const Individual& individual) cons
         if (subject_student_counts[p] > subject_total_capacity[p]) {
             // Simple repair: reduce to capacity
             subject_student_counts[p] = subject_total_capacity[p];
-            wasRepaired = true;
+            isValid = false;
             // Note: Actual genotype modification would require tracking which genes to change (sounds complex to me lol)
         }
     }
 
     // For now, return repaired as is (since actual repair is pretty complex at least for current state of this framework)
-    return {wasRepaired, repaired};
+    return {isValid, repaired};
 }

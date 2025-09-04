@@ -1,43 +1,40 @@
 #include "optimization/GeneticAlgorithm.hpp"
+#include "utils/Logger.hpp"
 #include <random>
 
 void SimpleGeneticAlgorithm::Init(const ProblemData& data, const Evaluator& evaluator) {
     this->problemData = &data;
     this->evaluator = &evaluator;
-    bestGenotype = Individual{};
+    bestIndividual = Individual{};
     initialized = true;
-    // Inicjalizacja populacji/genotypu
+
+    // random number generator
     std::mt19937 rng{std::random_device{}()};
-    size_t total_assignments = 0;
-    for (const auto& subjects : data.students_subjects) {
-        total_assignments += subjects.size();
-    }
-    for (size_t i = 0; i < total_assignments; ++i) {
-        bestGenotype.genotype.push_back(rng() % 5);
-    }
-    size_t num_groups = 0;
-    for (int g : data.groups_per_subject) num_groups += g;
-    for (size_t i = 0; i < num_groups; ++i) {
-        int timeslot = rng() % 35;
-        int room = rng() % 3;
-        bestGenotype.genotype.push_back(timeslot);
-        bestGenotype.genotype.push_back(room);
+
+    // inicjalizacja genotypu (rozmiar na evaluator.getTotalGenes() oraz wartości na rng() % evaluator.getMaxGeneValue(i))
+    bestIndividual.genotype.clear();
+    for (int i = 0; i < evaluator.getTotalGenes(); ++i) {
+        bestIndividual.genotype.push_back(rng() % (evaluator.getMaxGeneValue(i) + 1));
     }
 
-    bestGenotype.fitness = evaluator.evaluate(bestGenotype);
+    // obliczanie fitnessu
+    bestIndividual.fitness = evaluator.evaluate(bestIndividual);
 }
 
 Individual SimpleGeneticAlgorithm::RunIteration(int currentIteration) {
     if (!initialized || !problemData || !evaluator) {
-        throw std::runtime_error("SimpleGeneticAlgorithm not initialized");
+        throw std::runtime_error("SimpleGeneticAlgorithm not initialized properly");
     }
-
-    auto [isValid, repaired] = evaluator->repair(bestGenotype);
+    
+    auto [isValid, repaired] = evaluator->repair(bestIndividual);
     if (!isValid) {
+        bestIndividual.printDebugInfo("old");
+        repaired.printDebugInfo("repaired");
+        
         // użyj repaired jako poprawionego genotypu
     }
 
     // Przykładowa logika: fitness losowy, można dodać mutacje/cross cokolwiek takiego genetycznego później
-    bestGenotype.fitness = evaluator->evaluate(bestGenotype);
-    return bestGenotype;
+    bestIndividual.fitness = evaluator->evaluate(bestIndividual);
+    return bestIndividual;
 }
