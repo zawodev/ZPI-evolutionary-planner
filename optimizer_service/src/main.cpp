@@ -30,7 +30,7 @@ int main() {
         //return 0;
 
         // Data from input.json
-        FileEventReceiver receiver("data/input.json"); // hand_input.json or gen_input.json
+        FileEventReceiver receiver("data/input.json"); // path to input file
         RawProblemData rawFileData = receiver.receive();
 
         // Randomly generated data for testing
@@ -52,7 +52,7 @@ int main() {
         Logger::info(debugMsg);
 
         Evaluator evaluator(data);
-        std::unique_ptr<IGeneticAlgorithm> geneticAlgorithm = std::make_unique<ZawodevGeneticAlgorithm>();
+        std::unique_ptr<IGeneticAlgorithm> geneticAlgorithm = std::make_unique<ExampleGeneticAlgorithm>();
         Logger::info("Using genetic algorithm: " + std::string(typeid(*geneticAlgorithm).name()));
         
         geneticAlgorithm->Init(data, evaluator);
