@@ -1,4 +1,5 @@
 #include "model/ProblemData.hpp"
+#include "utils/Logger.hpp"
 #include <stdexcept>
 #include <string>
 
@@ -43,30 +44,32 @@ ProblemData::ProblemData(const RawProblemData& input_data) : _rawData(input_data
         // sum gaps weight
         _student_weights_sums[s] += pref.gaps.weight;
         // sum preferred_groups values
-        for (const auto& map : pref.preferred_groups) {
-            for (const auto& pair : map) {
-                _student_weights_sums[s] += pair.second;
-            }
+        for (const auto& pair : pref.preferred_groups) {
+            _student_weights_sums[s] += pair.second;
         }
         // sum avoid_groups values
-        for (const auto& map : pref.avoid_groups) {
-            for (const auto& pair : map) {
-                _student_weights_sums[s] += pair.second;
-            }
+        for (const auto& pair : pref.avoid_groups) {
+            _student_weights_sums[s] += pair.second;
         }
         // sum preferred_timeslots values
-        for (const auto& map : pref.preferred_timeslots) {
-            for (const auto& pair : map) {
-                _student_weights_sums[s] += pair.second;
-            }
+        for (const auto& pair : pref.preferred_timeslots) {
+            _student_weights_sums[s] += pair.second;
         }
         // sum avoid_timeslots values
-        for (const auto& map : pref.avoid_timeslots) {
-            for (const auto& pair : map) {
-                _student_weights_sums[s] += pair.second;
-            }
+        for (const auto& pair : pref.avoid_timeslots) {
+            _student_weights_sums[s] += pair.second;
         }
     }
+
+    // calculate _subject_student_count
+    _subject_student_count.resize(getSubjectsNum(), 0);
+    for (int s = 0; s < getStudentsNum(); ++s) {
+        for (int subj : _rawData.students_subjects[s]) {
+            _subject_student_count[subj]++;
+        }
+    }
+
+    _isFeasible = checkFeasibility();
 }
 
 int ProblemData::getAbsoluteGroupIndex(int idx_genu, int rel_group) const {
@@ -101,4 +104,33 @@ int ProblemData::getDayFromTimeslot(int timeslot) const {
         if (timeslot < cum) return d;
     }
     return -1; // invalid
+}
+
+int ProblemData::getSubjectFromGroup(int group) const {
+    int cum = 0;
+    for (int p = 0; p < getSubjectsNum(); ++p) {
+        cum += _rawData.groups_per_subject[p];
+        if (group < cum) return p;
+    }
+    return -1; // invalid
+}
+
+bool ProblemData::checkFeasibility() const {
+    // check capacity for each subject
+    for (int p = 0; p < getSubjectsNum(); ++p) {
+        if (_subject_total_capacity[p] < _subject_student_count[p]) {
+            Logger::warn("Subject " + std::to_string(p) + " has " + std::to_string(_subject_student_count[p]) + " students but only " + std::to_string(_subject_total_capacity[p]) + " capacity. Problem is unsolvable.");
+            return false;
+        }
+    }
+
+    // check if total groups <= total timeslots * rooms
+    int total_groups = 0;
+    for (int g : _rawData.groups_per_subject) total_groups += g;
+    int num_rooms = getRoomsNum();
+    if (total_groups > _total_timeslots * num_rooms) {
+        Logger::warn("Total groups (" + std::to_string(total_groups) + ") exceed available timeslots * rooms (" + std::to_string(_total_timeslots) + " * " + std::to_string(num_rooms) + " = " + std::to_string(_total_timeslots * num_rooms) + "). Problem is unsolvable.");
+        return false;
+    }
+    return true;
 }

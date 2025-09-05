@@ -10,6 +10,19 @@
 using json = nlohmann::json;
 namespace fs = std::filesystem;
 
+static std::string formatVectorOfVectors(const json& arr, int indent_level = 6) {
+    std::string indent_inner = std::string(indent_level, ' ');
+    std::string indent_close = std::string(indent_level - 2, ' ');
+    std::string result = "[\n";
+    for (size_t i = 0; i < arr.size(); ++i) {
+        result += indent_inner + arr[i].dump();
+        if (i < arr.size() - 1) result += ",";
+        result += "\n";
+    }
+    result += indent_close + "]";
+    return result;
+}
+
 static std::vector<std::map<int, int>> parse_pref_array(const json& arr) {
     std::vector<std::map<int, int>> out;
     for (const auto& el : arr) {
@@ -20,6 +33,14 @@ static std::vector<std::map<int, int>> parse_pref_array(const json& arr) {
         out.push_back(m);
     }
     return out;
+}
+
+static std::map<int, int> parse_pref_map(const json& obj) {
+    std::map<int, int> m;
+    for (auto it = obj.begin(); it != obj.end(); ++it) {
+        m[std::stoi(it.key())] = it.value().get<int>();
+    }
+    return m;
 }
 
 static std::vector<RoomTimeslotPreference> parse_management_room_timeslots(const json& arr) {
@@ -60,10 +81,10 @@ RawProblemData JsonParser::parseInput(const std::string& filename) {
                 sp.busy_days = s.at("busy_days").get<std::vector<int>>();
                 sp.gaps.value = s.at("gaps").at("value").get<bool>();
                 sp.gaps.weight = s.at("gaps").at("weight").get<int>();
-                sp.preferred_groups = parse_pref_array(s.at("preferred_groups"));
-                sp.avoid_groups = parse_pref_array(s.at("avoid_groups"));
-                sp.preferred_timeslots = parse_pref_array(s.at("preferred_timeslots"));
-                sp.avoid_timeslots = parse_pref_array(s.at("avoid_timeslots"));
+                sp.preferred_groups = parse_pref_map(s.at("preferred_groups"));
+                sp.avoid_groups = parse_pref_map(s.at("avoid_groups"));
+                sp.preferred_timeslots = parse_pref_map(s.at("preferred_timeslots"));
+                sp.avoid_timeslots = parse_pref_map(s.at("avoid_timeslots"));
                 data.students_preferences.push_back(sp);
             }
         }
@@ -74,8 +95,8 @@ RawProblemData JsonParser::parseInput(const std::string& filename) {
                 tp.busy_days = t.at("busy_days").get<std::vector<int>>();
                 tp.gaps.value = t.at("gaps").at("value").get<bool>();
                 tp.gaps.weight = t.at("gaps").at("weight").get<int>();
-                tp.preferred_timeslots = parse_pref_array(t.at("preferred_timeslots"));
-                tp.avoid_timeslots = parse_pref_array(t.at("avoid_timeslots"));
+                tp.preferred_timeslots = parse_pref_map(t.at("preferred_timeslots"));
+                tp.avoid_timeslots = parse_pref_map(t.at("avoid_timeslots"));
                 data.teachers_preferences.push_back(tp);
             }
         }
@@ -107,6 +128,9 @@ void JsonParser::writeOutput(const std::string& filename, const Individual& indi
         if (!out) {
             throw std::runtime_error("Cannot open file for writing: " + filename);
         }
+
+        double fitness = evaluator.evaluate(individual);
+
         json j;
         int studentsNum = data.getStudentsNum();
         int groupsNum = data.getGroupsNum();
@@ -136,9 +160,12 @@ void JsonParser::writeOutput(const std::string& filename, const Individual& indi
         }
 
         j["genotype"] = individual.genotype;
-        j["fitness"] = individual.fitness;
+        j["fitness"] = fitness;
         j["by_student"] = by_student;
         j["by_group"] = by_group;
+        j["student_fitnesses"] = evaluator.getLastStudentFitnesses();
+        j["teacher_fitnesses"] = evaluator.getLastTeacherFitnesses();
+        j["management_fitness"] = evaluator.getLastManagementFitness();
 
         //old style (ugly print)
         //out << j.dump(2);
@@ -147,21 +174,124 @@ void JsonParser::writeOutput(const std::string& filename, const Individual& indi
         std::string json_str = "{\n";
         json_str += "  \"genotype\": " + j["genotype"].dump() + ",\n";
         json_str += "  \"fitness\": " + std::to_string(j["fitness"].get<double>()) + ",\n";
-        json_str += "  \"by_student\": [\n";
-        for (size_t i = 0; i < by_student.size(); ++i) {
-            json_str += "    " + json(by_student[i]).dump();
-            if (i < by_student.size() - 1) json_str += ",";
-            json_str += "\n";
-        }
-        json_str += "  ],\n";
-        json_str += "  \"by_group\": [\n";
-        for (size_t i = 0; i < by_group.size(); ++i) {
-            json_str += "    " + json(by_group[i]).dump();
-            if (i < by_group.size() - 1) json_str += ",";
-            json_str += "\n";
-        }
-        json_str += "  ]\n";
+        json_str += "  \"by_student\": " + formatVectorOfVectors(json(by_student), 4) + ",\n";
+        json_str += "  \"by_group\": " + formatVectorOfVectors(json(by_group), 4) + ",\n";
+        json_str += "  \"student_fitnesses\": " + j["student_fitnesses"].dump() + ",\n";
+        json_str += "  \"teacher_fitnesses\": " + j["teacher_fitnesses"].dump() + ",\n";
+        json_str += "  \"management_fitness\": " + std::to_string(j["management_fitness"].get<double>()) + "\n";
         json_str += "}\n";
+        out << json_str;
+    } catch (const std::exception& e) {
+        throw std::runtime_error(std::string("JSON write error: ") + e.what());
+    }
+}
+
+void JsonParser::writeInput(const std::string& filename, const RawProblemData& data) {
+    try {
+        fs::path outPath(filename);
+        if (!outPath.parent_path().empty() && !fs::exists(outPath.parent_path())) {
+            fs::create_directories(outPath.parent_path());
+        }
+        std::ofstream out(filename);
+        if (!out) {
+            throw std::runtime_error("Cannot open file for writing: " + filename);
+        }
+        json j;
+        // constraints
+        j["constraints"]["timeslots_per_day"] = data.timeslots_per_day;
+        j["constraints"]["groups_per_subject"] = data.groups_per_subject;
+        j["constraints"]["groups_soft_capacity"] = data.groups_soft_capacity;
+        j["constraints"]["students_subjects"] = data.students_subjects;
+        j["constraints"]["teachers_groups"] = data.teachers_groups;
+        j["constraints"]["rooms_unavailability_timeslots"] = data.rooms_unavailability_timeslots;
+        // preferences
+        if (!data.students_preferences.empty()) {
+            for (const auto& sp : data.students_preferences) {
+                json s;
+                s["free_days"] = sp.free_days;
+                s["busy_days"] = sp.busy_days;
+                s["gaps"]["value"] = sp.gaps.value;
+                s["gaps"]["weight"] = sp.gaps.weight;
+                s["preferred_groups"] = json::object();
+                for (const auto& p : sp.preferred_groups) {
+                    s["preferred_groups"][std::to_string(p.first)] = p.second;
+                }
+                s["avoid_groups"] = json::object();
+                for (const auto& p : sp.avoid_groups) {
+                    s["avoid_groups"][std::to_string(p.first)] = p.second;
+                }
+                s["preferred_timeslots"] = json::object();
+                for (const auto& p : sp.preferred_timeslots) {
+                    s["preferred_timeslots"][std::to_string(p.first)] = p.second;
+                }
+                s["avoid_timeslots"] = json::object();
+                for (const auto& p : sp.avoid_timeslots) {
+                    s["avoid_timeslots"][std::to_string(p.first)] = p.second;
+                }
+                j["preferences"]["students"].push_back(s);
+            }
+        }
+        if (!data.teachers_preferences.empty()) {
+            for (const auto& tp : data.teachers_preferences) {
+                json t;
+                t["free_days"] = tp.free_days;
+                t["busy_days"] = tp.busy_days;
+                t["gaps"]["value"] = tp.gaps.value;
+                t["gaps"]["weight"] = tp.gaps.weight;
+                t["preferred_timeslots"] = json::object();
+                for (const auto& p : tp.preferred_timeslots) {
+                    t["preferred_timeslots"][std::to_string(p.first)] = p.second;
+                }
+                t["avoid_timeslots"] = json::object();
+                for (const auto& p : tp.avoid_timeslots) {
+                    t["avoid_timeslots"][std::to_string(p.first)] = p.second;
+                }
+                j["preferences"]["teachers"].push_back(t);
+            }
+        }
+        if (!data.management_preferences.preferred_room_timeslots.empty() ||
+            !data.management_preferences.avoid_room_timeslots.empty() ||
+            data.management_preferences.group_max_overflow.weight != 0) {
+            if (!data.management_preferences.preferred_room_timeslots.empty()) {
+                for (const auto& mp : data.management_preferences.preferred_room_timeslots) {
+                    json obj;
+                    obj["room"] = mp.room;
+                    obj["timeslot"] = mp.timeslot;
+                    obj["weight"] = mp.weight;
+                    j["preferences"]["management"]["preferred_room_timeslots"].push_back(obj);
+                }
+            }
+            if (!data.management_preferences.avoid_room_timeslots.empty()) {
+                for (const auto& mp : data.management_preferences.avoid_room_timeslots) {
+                    json obj;
+                    obj["room"] = mp.room;
+                    obj["timeslot"] = mp.timeslot;
+                    obj["weight"] = mp.weight;
+                    j["preferences"]["management"]["avoid_room_timeslots"].push_back(obj);
+                }
+            }
+            if (data.management_preferences.group_max_overflow.weight != 0) {
+                j["preferences"]["management"]["group_max_overflow"]["value"] = data.management_preferences.group_max_overflow.value;
+                j["preferences"]["management"]["group_max_overflow"]["weight"] = data.management_preferences.group_max_overflow.weight;
+            }
+        }
+        //old style (ugly print)
+        //out << j.dump(2);
+
+        //manual pretty print to avoid issues with large arrays in one line
+        std::string json_str = "{\n";
+        json_str += "  \"constraints\": {\n";
+        json_str += "    \"timeslots_per_day\": " + j["constraints"]["timeslots_per_day"].dump() + ",\n";
+        json_str += "    \"groups_per_subject\": " + j["constraints"]["groups_per_subject"].dump() + ",\n";
+        json_str += "    \"groups_soft_capacity\": " + j["constraints"]["groups_soft_capacity"].dump() + ",\n";
+        json_str += "    \"students_subjects\": " + formatVectorOfVectors(j["constraints"]["students_subjects"]) + ",\n";
+        json_str += "    \"teachers_groups\": " + formatVectorOfVectors(j["constraints"]["teachers_groups"]) + ",\n";
+        json_str += "    \"rooms_unavailability_timeslots\": " + formatVectorOfVectors(j["constraints"]["rooms_unavailability_timeslots"]) + "\n";
+        json_str += "  }";
+        if (j.contains("preferences")) {
+            json_str += ",\n  \"preferences\": " + j["preferences"].dump(2);
+        }
+        json_str += "\n}\n";
         out << json_str;
     } catch (const std::exception& e) {
         throw std::runtime_error(std::string("JSON write error: ") + e.what());

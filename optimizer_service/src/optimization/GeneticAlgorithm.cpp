@@ -12,7 +12,7 @@ void SimpleGeneticAlgorithm::Init(const ProblemData& data, const Evaluator& eval
     rng.seed(seed);
 
     // inicjalizacja genotypu (rozmiar na evaluator.getTotalGenes() oraz wartości na rng() % evaluator.getMaxGeneValue(i))
-    evaluator.initRandom(bestIndividual, rng);
+    evaluator.initRandom(bestIndividual);
 
     // obliczanie fitnessu
     bestIndividual.fitness = evaluator.evaluate(bestIndividual);
@@ -32,7 +32,7 @@ Individual SimpleGeneticAlgorithm::RunIteration(int currentIteration) {
     }
 
     // Przykładowa logika: fitness losowy, można dodać mutacje/cross cokolwiek takiego genetycznego później
-    evaluator->initRandom(bestIndividual, rng);
+    evaluator->initRandom(bestIndividual);
     bestIndividual.fitness = evaluator->evaluate(bestIndividual);
 
     return bestIndividual;

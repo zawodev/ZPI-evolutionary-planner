@@ -6,18 +6,18 @@ struct StudentPreference {
     std::vector<int> free_days;
     std::vector<int> busy_days;
     struct { bool value; int weight; } gaps;
-    std::vector<std::map<int, int>> preferred_groups;
-    std::vector<std::map<int, int>> avoid_groups;
-    std::vector<std::map<int, int>> preferred_timeslots;
-    std::vector<std::map<int, int>> avoid_timeslots;
+    std::map<int, int> preferred_groups;
+    std::map<int, int> avoid_groups;
+    std::map<int, int> preferred_timeslots;
+    std::map<int, int> avoid_timeslots;
 };
 
 struct TeacherPreference {
     std::vector<int> free_days;
     std::vector<int> busy_days;
     struct { bool value; int weight; } gaps;
-    std::vector<std::map<int, int>> preferred_timeslots;
-    std::vector<std::map<int, int>> avoid_timeslots;
+    std::map<int, int> preferred_timeslots;
+    std::map<int, int> avoid_timeslots;
 };
 
 struct RoomTimeslotPreference {
@@ -56,6 +56,10 @@ private:
     std::vector<int> _subject_total_capacity;
     std::vector<int> _cumulative_groups;
     std::vector<int> _student_weights_sums;
+    std::vector<int> _subject_student_count;
+    
+    bool _isFeasible;
+    bool checkFeasibility() const;
 
 public:
     ProblemData(const RawProblemData& input_data);
@@ -85,8 +89,12 @@ public:
     const std::vector<int>& getSubjectTotalCapacity() const { return _subject_total_capacity; }
     const std::vector<int>& getCumulativeGroups() const { return _cumulative_groups; }
     const std::vector<int>& getStudentWeightsSums() const { return _student_weights_sums; }
+    const std::vector<int>& getSubjectStudentCount() const { return _subject_student_count; }
 
     // more complex functions
     int getAbsoluteGroupIndex(int idx_genu, int rel_group) const;
     int getDayFromTimeslot(int timeslot) const;
+    int getSubjectFromGroup(int group) const;
+
+    bool isFeasible() const { return _isFeasible; }
 };

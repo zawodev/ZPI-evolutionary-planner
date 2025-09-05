@@ -3,7 +3,7 @@
 #include <random>
 #include <set>
 
-Evaluator::Evaluator(const ProblemData& data) : problemData(data) {
+Evaluator::Evaluator(const ProblemData& data, int seed) : problemData(data), rng(seed) {
     buildMaxValues();
 }
 
@@ -73,6 +73,7 @@ double Evaluator::evaluate(const Individual& individual) const {
 
     // Evaluate students
     double total_student_fitness = 0.0;
+    lastStudentFitnesses.clear();
     for (int s = 0; s < problemData.getStudentsNum(); ++s) {
         double student_fitness = 0.0;
         double student_total_weight = 0.0;
@@ -130,11 +131,13 @@ double Evaluator::evaluate(const Individual& individual) const {
         if (student_total_weight > 0) {
             total_student_fitness += student_fitness / student_total_weight;
         }
+        lastStudentFitnesses.push_back((student_total_weight > 0) ? (student_fitness / student_total_weight) : 0.0);
     }
     double avg_student_fitness = total_student_fitness / problemData.getStudentsNum();
 
     // Evaluate teachers
     double total_teacher_fitness = 0.0;
+    lastTeacherFitnesses.clear();
     for (int t = 0; t < problemData.getTeachersNum(); ++t) {
         double teacher_fitness = 0.0;
         double teacher_total_weight = 0.0;
@@ -190,28 +193,25 @@ double Evaluator::evaluate(const Individual& individual) const {
         }
 
         // preferred_timeslots
-        for (const auto& map : pref.preferred_timeslots) {
-            for (const auto& pair : map) {
-                int timeslot = pair.first;
-                int weight = pair.second;
-                if (teacher_timeslots.count(timeslot)) teacher_fitness += weight;
-                teacher_total_weight += weight;
-            }
+        for (const auto& pair : pref.preferred_timeslots) {
+            int timeslot = pair.first;
+            int weight = pair.second;
+            if (teacher_timeslots.count(timeslot)) teacher_fitness += weight;
+            teacher_total_weight += weight;
         }
 
         // avoid_timeslots
-        for (const auto& map : pref.avoid_timeslots) {
-            for (const auto& pair : map) {
-                int timeslot = pair.first;
-                int weight = pair.second;
-                if (!teacher_timeslots.count(timeslot)) teacher_fitness += weight;
-                teacher_total_weight += weight;
-            }
+        for (const auto& pair : pref.avoid_timeslots) {
+            int timeslot = pair.first;
+            int weight = pair.second;
+            if (!teacher_timeslots.count(timeslot)) teacher_fitness += weight;
+            teacher_total_weight += weight;
         }
 
         if (teacher_total_weight > 0) {
             total_teacher_fitness += teacher_fitness / teacher_total_weight;
         }
+        lastTeacherFitnesses.push_back((teacher_total_weight > 0) ? (teacher_fitness / teacher_total_weight) : 0.0);
     }
     double avg_teacher_fitness = total_teacher_fitness / problemData.getTeachersNum();
 
@@ -248,14 +248,15 @@ double Evaluator::evaluate(const Individual& individual) const {
 
     // group_max_overflow (simplified: assume no overflow for now)
     if (pref.group_max_overflow.weight > 0) {
-        // For simplicity, always add if value == 0 (no overflow preferred)
+        // for simplicity, always add if value == 0 (no overflow preferred)
         if (pref.group_max_overflow.value == 0) management_fitness += pref.group_max_overflow.weight;
         management_total_weight += pref.group_max_overflow.weight;
     }
 
     double avg_management_fitness = (management_total_weight > 0) ? (management_fitness / management_total_weight) : 1.0;
+    lastManagementFitness = avg_management_fitness;
 
-    // Average all
+    // average all
     double total_fitness = (avg_student_fitness + avg_teacher_fitness + avg_management_fitness) / 3.0;
     return total_fitness;
 }
@@ -265,36 +266,79 @@ int Evaluator::getMaxGeneValue(int geneIdx) const {
 }
 
 std::pair<bool, Individual> Evaluator::repair(const Individual& individual) const {
-    Individual repaired = individual; //remember this need to be a copy, not a reference (Individual does not have copy constructor right now)
+
+    if (!problemData.isFeasible()) {
+        Logger::warn("ProblemData is not feasible. Repair is not possible.");
+        return {false, individual};
+    }
+
+    Individual repairedIndividual = individual; //remember this need to be a copy, not a reference (Individual does not have copy constructor right now)
     bool isValid = true;
 
-    /*
-    // Calculate subject student counts
-    std::vector<int> subject_student_counts(problemData.getSubjectsNum(), 0);
+    // deterministic repair for genotypes breaking constraints
+
+    // check and repair capacity violations per group
+    // calculate group counts and student indices per group
+    std::vector<int> group_counts(problemData.getGroupsNum(), 0);
+    std::vector<std::vector<int>> group_to_student_indices(problemData.getGroupsNum());
     int idx = 0;
     for (int s = 0; s < problemData.getStudentsNum(); ++s) {
-        for (int p : problemData.getStudentsSubjects()[s]) {
-            int rel_gen = repaired.genotype[idx++];
-            subject_student_counts[p]++;
+        for (size_t i = 0; i < problemData.getStudentsSubjects()[s].size(); ++i) {
+            int rel_group = repairedIndividual.genotype[idx];
+            int abs_group = problemData.getAbsoluteGroupIndex(idx, rel_group);
+            group_counts[abs_group]++;
+            group_to_student_indices[abs_group].push_back(idx);
+            idx++;
         }
     }
 
-    // Check and repair capacity violations per subject
-    const auto& subject_total_capacity = problemData.getSubjectTotalCapacity();
-    for (int p = 0; p < problemData.getSubjectsNum(); ++p) {
-        if (subject_student_counts[p] > subject_total_capacity[p]) {
-            // Simple repair: reduce to capacity
-            subject_student_counts[p] = subject_total_capacity[p];
-            isValid = false;
-            // Note: Actual genotype modification would require tracking which genes to change (sounds complex to me lol)
+    // skip group assignments part
+    idx += problemData.getGroupsNum() * 2;
+
+    // repair capacity violations per group
+    const auto& groups_soft_capacity = problemData.getGroupsSoftCapacity();
+    const auto& cumulative_groups = problemData.getCumulativeGroups();
+    for (int g = 0; g < problemData.getGroupsNum(); ++g) {
+        if (group_counts[g] > groups_soft_capacity[g]) {
+            int excess = group_counts[g] - groups_soft_capacity[g];
+            // find subject for this group
+            int p = problemData.getSubjectFromGroup(g);
+            // find underfilled groups for this subject
+            std::vector<int> available_groups;
+            for (int gg = cumulative_groups[p]; gg < cumulative_groups[p + 1]; ++gg) {
+                if (group_counts[gg] < groups_soft_capacity[gg]) {
+                    available_groups.push_back(gg);
+                }
+            }
+            // move excess students to available groups
+            for (int i = 0; i < excess && !available_groups.empty(); ++i) {
+                int student_idx = group_to_student_indices[g].back();
+                group_to_student_indices[g].pop_back();
+                // choose a random available group (for simplicity, first one)
+                int new_abs_group = available_groups[0];
+                // calculate new rel_group
+                int new_rel_group = new_abs_group - cumulative_groups[p];
+                repairedIndividual.genotype[student_idx] = new_rel_group;
+                // update counts
+                group_counts[g]--;
+                group_counts[new_abs_group]++;
+                group_to_student_indices[new_abs_group].push_back(student_idx);
+                // if new group is now full, remove from available
+                if (group_counts[new_abs_group] >= groups_soft_capacity[new_abs_group]) {
+                    available_groups.erase(available_groups.begin());
+                }
+            }
+            if (group_counts[g] > groups_soft_capacity[g]) {
+                isValid = false; // should not happen if feasibility check worked
+                Logger::warn("Weird? Could not fully repair group " + std::to_string(g) + " capacity violation.");
+            }
         }
     }
-    */
-    // For now, return repaired as is (since actual repair is pretty complex at least for current state of this framework)
-    return {isValid, repaired};
+
+    return {isValid, repairedIndividual};
 }
 
-void Evaluator::initRandom(Individual& individual, std::mt19937& rng) const {
+void Evaluator::initRandom(Individual& individual) const {
     individual.genotype.clear();
     for (int i = 0; i < getTotalGenes(); ++i) {
         individual.genotype.push_back(rng() % (getMaxGeneValue(i) + 1));

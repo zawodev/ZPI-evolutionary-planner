@@ -21,6 +21,10 @@ public:
         std::cout << YELLOW << "[INFO]" << RESET << " " << msg << std::endl;
     }
 
+    static void warn(const std::string& msg) {
+        std::cout << MAGENTA << "[WARN]" << RESET << " " << msg << std::endl;
+    }
+
     static void error(const std::string& msg) {
         std::cerr << RED << "[ERROR]" << RESET << " " << msg << std::endl;
     }

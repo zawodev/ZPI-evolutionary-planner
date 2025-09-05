@@ -6,7 +6,7 @@
 
 class JsonParser {
 public:
-    static RawProblemData parseInput(const std::string& filename);
-    static void writeInput(const std::string& filename, const RawProblemData& data);
-    static void writeOutput(const std::string& filename, const Individual& individual, const ProblemData& data, const Evaluator& evaluator);
+    static RawProblemData parseInput(const std::string& filename); //read input.json
+    static void writeInput(const std::string& filename, const RawProblemData& data); // mostly for testing (writes generated_input.json from TestCaseGenerator)
+    static void writeOutput(const std::string& filename, const Individual& individual, const ProblemData& data, const Evaluator& evaluator); // write output.json
 };
