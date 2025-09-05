@@ -2,23 +2,28 @@
 #include "model/Individual.hpp"
 #include "model/ProblemData.hpp"
 #include "optimization/Evaluator.hpp"
+#include "optimization/IGeneticAlgorithm.hpp"
 
-class IGeneticAlgorithm {
-public:
-    virtual ~IGeneticAlgorithm() = default;
-    virtual void Init(const ProblemData& data, const Evaluator& evaluator, int seed = std::random_device{}()) = 0;
-    virtual Individual RunIteration(int currentIteration) = 0;
-};
-
-class SimpleGeneticAlgorithm : public IGeneticAlgorithm {
+class ZawodevGeneticAlgorithm : public IGeneticAlgorithm {
 public:
     void Init(const ProblemData& data, const Evaluator& evaluator, int seed = std::random_device{}()) override;
     Individual RunIteration(int currentIteration) override;
 private:
+    // system variables
     const ProblemData* problemData = nullptr;
     const Evaluator* evaluator = nullptr;
+    mutable std::mt19937 rng;
     bool initialized = false;
 
+    // algorithm variables
     Individual bestIndividual;
-    std::mt19937 rng;
+    std::vector<Individual> population;
+    int populationSize = 10;
+    int crossSize = 5;
+    
+    // functions
+    void initRandom(Individual& individual) const;
+    void fihc(Individual& individual);
+    void selection();
+
 };

@@ -26,7 +26,8 @@ set(SOURCES
     src/model/Individual.cpp
     src/model/ProblemData.cpp
     src/optimization/Evaluator.cpp
-    src/optimization/GeneticAlgorithm.cpp
+    src/optimization/ExampleGeneticAlgorithm.cpp
+    src/optimization/ZawodevGeneticAlgorithm.cpp
     src/utils/JsonParser.cpp
     src/utils/Logger.cpp
     src/utils/TestCaseGenerator.cpp

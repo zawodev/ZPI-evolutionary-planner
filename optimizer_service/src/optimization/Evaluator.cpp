@@ -3,7 +3,7 @@
 #include <random>
 #include <set>
 
-Evaluator::Evaluator(const ProblemData& data, int seed) : problemData(data), rng(seed) {
+Evaluator::Evaluator(const ProblemData& data) : problemData(data) {
     buildMaxValues();
 }
 
@@ -46,7 +46,7 @@ double Evaluator::evaluate(const Individual& individual) const {
         return 0.0;
     }
 
-    // Decode genotype
+    // Decode genotype (student -> groups)
     std::vector<std::vector<int>> student_groups(problemData.getStudentsNum());
     int idx = 0;
     for (int s = 0; s < problemData.getStudentsNum(); ++s) {
@@ -57,7 +57,7 @@ double Evaluator::evaluate(const Individual& individual) const {
             idx++;
         }
     }
-
+    // Decode genotype (group -> timeslot and room)
     std::vector<std::pair<int, int>> group_assignments(problemData.getGroupsNum());
     for (int g = 0; g < problemData.getGroupsNum(); ++g) {
         int timeslot = individual.genotype[idx++];
@@ -261,19 +261,16 @@ double Evaluator::evaluate(const Individual& individual) const {
     return total_fitness;
 }
 
-int Evaluator::getMaxGeneValue(int geneIdx) const {
-    return maxValues[geneIdx];
-}
+bool Evaluator::repair(Individual& individual) const {
 
-std::pair<bool, Individual> Evaluator::repair(const Individual& individual) const {
+    // TODO: probably should make it a void, which works on original individual by reference
 
     if (!problemData.isFeasible()) {
         Logger::warn("ProblemData is not feasible. Repair is not possible.");
-        return {false, individual};
+        return false;
     }
 
-    Individual repairedIndividual = individual; //remember this need to be a copy, not a reference (Individual does not have copy constructor right now)
-    bool isValid = true;
+    bool wasRepaired = false;
 
     // deterministic repair for genotypes breaking constraints
 
@@ -284,7 +281,7 @@ std::pair<bool, Individual> Evaluator::repair(const Individual& individual) cons
     int idx = 0;
     for (int s = 0; s < problemData.getStudentsNum(); ++s) {
         for (size_t i = 0; i < problemData.getStudentsSubjects()[s].size(); ++i) {
-            int rel_group = repairedIndividual.genotype[idx];
+            int rel_group = individual.genotype[idx];
             int abs_group = problemData.getAbsoluteGroupIndex(idx, rel_group);
             group_counts[abs_group]++;
             group_to_student_indices[abs_group].push_back(idx);
@@ -301,6 +298,7 @@ std::pair<bool, Individual> Evaluator::repair(const Individual& individual) cons
     for (int g = 0; g < problemData.getGroupsNum(); ++g) {
         if (group_counts[g] > groups_soft_capacity[g]) {
             int excess = group_counts[g] - groups_soft_capacity[g];
+            wasRepaired = true;  // wykryto błąd, będziemy naprawiać
             // find subject for this group
             int p = problemData.getSubjectFromGroup(g);
             // find underfilled groups for this subject
@@ -318,7 +316,7 @@ std::pair<bool, Individual> Evaluator::repair(const Individual& individual) cons
                 int new_abs_group = available_groups[0];
                 // calculate new rel_group
                 int new_rel_group = new_abs_group - cumulative_groups[p];
-                repairedIndividual.genotype[student_idx] = new_rel_group;
+                individual.genotype[student_idx] = new_rel_group;
                 // update counts
                 group_counts[g]--;
                 group_counts[new_abs_group]++;
@@ -329,23 +327,11 @@ std::pair<bool, Individual> Evaluator::repair(const Individual& individual) cons
                 }
             }
             if (group_counts[g] > groups_soft_capacity[g]) {
-                isValid = false; // should not happen if feasibility check worked
+                //should not happen if feasibility check worked
                 Logger::warn("Weird? Could not fully repair group " + std::to_string(g) + " capacity violation.");
             }
         }
     }
 
-    return {isValid, repairedIndividual};
-}
-
-void Evaluator::initRandom(Individual& individual) const {
-    individual.genotype.clear();
-    for (int i = 0; i < getTotalGenes(); ++i) {
-        individual.genotype.push_back(rng() % (getMaxGeneValue(i) + 1));
-    }
-
-    auto [isValid, repaired] = repair(individual);
-    if (!isValid) {
-        individual = repaired;
-    }
+    return wasRepaired;
 }

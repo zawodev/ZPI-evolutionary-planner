@@ -69,6 +69,19 @@ ProblemData::ProblemData(const RawProblemData& input_data) : _rawData(input_data
         }
     }
 
+    // print subject student counts and capacities
+    std::string str = "[";
+    std::string str2 = "[";
+    for (int p = 0; p < getSubjectsNum(); ++p) {
+        str += std::to_string(_subject_student_count[p]) + (p == getSubjectsNum() - 1 ? "" : ", ");
+    }
+    for (int p = 0; p < getSubjectsNum(); ++p) {
+        str2 += std::to_string(_subject_total_capacity[p]) + (p == getSubjectsNum() - 1 ? "" : ", ");
+    }
+    str += "]";
+    str2 += "]";
+    Logger::info("Subject student counts: " + str + ", capacities: " + str2);
+
     _isFeasible = checkFeasibility();
 }
 

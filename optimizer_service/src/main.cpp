@@ -1,6 +1,8 @@
 #include "event/EventReceiver.hpp"
 #include "optimization/Evaluator.hpp"
-#include "optimization/GeneticAlgorithm.hpp"
+#include "optimization/IGeneticAlgorithm.hpp"
+#include "optimization/ExampleGeneticAlgorithm.hpp"
+#include "optimization/ZawodevGeneticAlgorithm.hpp"
 #include "utils/JsonParser.hpp"
 #include "utils/Logger.hpp"
 #include "utils/TestCaseGenerator.hpp"
@@ -36,6 +38,11 @@ int main() {
         // RawProblemData rawGenData = generator.generate(100, 50, 10, 20, 10, 25, 2000); // example values
 
         ProblemData data(rawFileData);
+        if (!data.isFeasible()) {
+            Logger::error("Problem is not solvable. Exiting.");
+            return 1;
+        }
+
         std::string debugMsg = "Received ProblemData with " + std::to_string(data.getStudentsNum()) + " students, " +
                                std::to_string(data.getGroupsNum()) + " groups, " +
                                std::to_string(data.getSubjectsNum()) + " subjects, " +
@@ -44,16 +51,17 @@ int main() {
                                std::to_string(data.totalTimeslots()) + " total timeslots.";
         Logger::info(debugMsg);
 
-        Evaluator evaluator(data, 42);
-        std::unique_ptr<IGeneticAlgorithm> geneticAlgorithm = std::make_unique<SimpleGeneticAlgorithm>();
-        Individual bestIndividual;
-
-        geneticAlgorithm->Init(data, evaluator, 42);
-        Logger::info("Genetic algorithm initialization complete. Starting iterations...");
+        Evaluator evaluator(data);
+        std::unique_ptr<IGeneticAlgorithm> geneticAlgorithm = std::make_unique<ZawodevGeneticAlgorithm>();
+        Logger::info("Using genetic algorithm: " + std::string(typeid(*geneticAlgorithm).name()));
         
-        for (int i = 0; i < 50; ++i) {
+        geneticAlgorithm->Init(data, evaluator);
+        Logger::info("Genetic algorithm initialization complete. Starting iterations...");
+
+        Individual bestIndividual;
+        for (int i = 0; i < 10; ++i) {
             bestIndividual = geneticAlgorithm->RunIteration(i);
-            Logger::info("Iteration " + std::to_string(i) + ", fitness: " + std::to_string(bestIndividual.fitness));
+            Logger::info("Iteration " + std::to_string(i) + ", best fitness: " + std::to_string(bestIndividual.fitness));
         }
 
         JsonParser::writeOutput("data/output.json", bestIndividual, data, evaluator);

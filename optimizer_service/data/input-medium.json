@@ -1,8 +1,8 @@
 {
   "constraints": {
     "timeslots_per_day": [6,5,4,4,6,0,0],
-    "groups_per_subject": [5,3,1],
-    "groups_soft_capacity": [41,39,26,24,33,20,28,35,69],
+    "groups_per_subject": [4,3,2],
+    "groups_soft_capacity": [17,17,16,17,22,21,22,32,37],
     "students_subjects": [
       [1,0],
       [1,2],
