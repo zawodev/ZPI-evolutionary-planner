@@ -15,14 +15,17 @@ RawProblemData TestCaseGenerator::generate(int numStudents, int numGroups, int n
         std::random_device rd;
         std::mt19937 gen(rd());
 
+        int MGMT_PREFERENCE_DENSITY_FACTOR = 10; // higher means more preferences
+        int MAX_WEIGHT = 100; // max weight for preferences
+
         // Common distributions
         std::uniform_int_distribution<> dist_bool(0, 1);
         std::uniform_int_distribution<> dist_num_ts(0, numTimeslots);
-        std::uniform_int_distribution<> dist_num_mgmt(0, numRooms * numTimeslots / 10);
+        std::uniform_int_distribution<> dist_num_mgmt(0, numRooms * numTimeslots / MGMT_PREFERENCE_DENSITY_FACTOR);
 
         // Weight distribution: logarithmic, P(k) proportional to 1/(k+1) for k=0 to 100
-        std::vector<double> weights(101);
-        for (int i = 0; i < 101; ++i) {
+        std::vector<double> weights(MAX_WEIGHT);
+        for (int i = 0; i < MAX_WEIGHT; ++i) {
             weights[i] = 1.0 / (i + 1);
         }
         std::discrete_distribution<> dist_weight(weights.begin(), weights.end());

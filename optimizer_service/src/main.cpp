@@ -55,7 +55,9 @@ int main() {
         std::unique_ptr<IGeneticAlgorithm> geneticAlgorithm = std::make_unique<ExampleGeneticAlgorithm>();
         Logger::info("Using genetic algorithm: " + std::string(typeid(*geneticAlgorithm).name()));
         
-        geneticAlgorithm->Init(data, evaluator);
+        int seed = std::random_device{}();
+        //int seed = 42;
+        geneticAlgorithm->Init(data, evaluator, seed);
         Logger::info("Genetic algorithm initialization complete. Starting iterations...");
 
         Individual bestIndividual;

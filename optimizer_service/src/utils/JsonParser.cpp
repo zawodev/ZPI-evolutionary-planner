@@ -1,10 +1,10 @@
 #include "utils/JsonParser.hpp"
 #include <fstream>
 #include <nlohmann/json.hpp>
-#include "utils/Logger.hpp"
 #include <iostream>
 #include <stdexcept>
 #include <filesystem>
+#include "utils/Logger.hpp"
 #include "optimization/Evaluator.hpp"
 
 using json = nlohmann::json;
