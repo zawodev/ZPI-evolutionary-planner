@@ -25,6 +25,9 @@
 /venv/
 /env/
 
+# Environment variables
+**/*.env
+
 # Django
 *.log
 /media/

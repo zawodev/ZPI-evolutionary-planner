@@ -14,7 +14,7 @@ void Evaluator::buildMaxValues() {
     int roomsNum = problemData.getRoomsNum();
     int timeslotsNum = problemData.totalTimeslots();
 
-    // Student part: for each subject of each student, max = groups_per_subject[p] - 1
+    // student part: for each subject of each student, max = groups_per_subject[p] - 1
     for (int s = 0; s < studentsNum; ++s) {
         for (int p : problemData.getStudentsSubjects()[s]) {
             int max_val = problemData.getGroupsPerSubject()[p] - 1;
@@ -22,7 +22,7 @@ void Evaluator::buildMaxValues() {
         }
     }
 
-    // Group part
+    // group part
     for (int g = 0; g < groupsNum; ++g) {
         maxValues.push_back(timeslotsNum - 1); // timeslot
         maxValues.push_back(roomsNum - 1); // room
@@ -46,7 +46,7 @@ double Evaluator::evaluate(const Individual& individual) const {
         return 0.0;
     }
 
-    // Decode genotype (student -> groups)
+    // decode genotype (student -> groups)
     std::vector<std::vector<int>> student_groups(problemData.getStudentsNum());
     int idx = 0;
     for (int s = 0; s < problemData.getStudentsNum(); ++s) {
@@ -57,7 +57,7 @@ double Evaluator::evaluate(const Individual& individual) const {
             idx++;
         }
     }
-    // Decode genotype (group -> timeslot and room)
+    // decode genotype (group -> timeslot and room)
     std::vector<std::pair<int, int>> group_assignments(problemData.getGroupsNum());
     for (int g = 0; g < problemData.getGroupsNum(); ++g) {
         int timeslot = individual.genotype[idx++];
@@ -65,13 +65,13 @@ double Evaluator::evaluate(const Individual& individual) const {
         group_assignments[g] = {timeslot, room};
     }
 
-    // Calculate cumulative timeslots for days
+    // calculate cumulative timeslots for days
     std::vector<int> cum_timeslots(problemData.getDaysNum() + 1, 0);
     for (int d = 1; d <= problemData.getDaysNum(); ++d) {
         cum_timeslots[d] = cum_timeslots[d - 1] + problemData.getTimeslotsPerDay()[d - 1];
     }
 
-    // Evaluate students
+    // evaluate students
     double total_student_fitness = 0.0;
     lastStudentFitnesses.clear();
     for (int s = 0; s < problemData.getStudentsNum(); ++s) {
@@ -79,7 +79,7 @@ double Evaluator::evaluate(const Individual& individual) const {
         double student_total_weight = 0.0;
         const auto& pref = problemData.getStudentsPreferences()[s];
 
-        // Get student timeslots
+        // get student timeslots
         std::set<int> student_timeslots;
         for (int g : student_groups[s]) {
             int timeslot = group_assignments[g].first;
@@ -112,20 +112,31 @@ double Evaluator::evaluate(const Individual& individual) const {
             }
         }
 
-        // gaps (simplified)
-        if (pref.gaps.weight > 0) {
-            int days_with_class = 0;
+        // no_gaps (simplified: award points if student has no gaps in their schedule)
+        if (pref.no_gaps > 0) {
+            bool has_gaps = false;
+            // check each day for gaps
             for (int d = 0; d < problemData.getDaysNum(); ++d) {
-                bool has = false;
+                std::vector<int> day_timeslots;
                 for (int t = cum_timeslots[d]; t < cum_timeslots[d + 1]; ++t) {
-                    if (student_timeslots.count(t)) has = true;
+                    if (student_timeslots.count(t)) {
+                        day_timeslots.push_back(t);
+                    }
                 }
-                if (has) days_with_class++;
+                // if student has classes on this day, check for gaps
+                if (day_timeslots.size() > 1) {
+                    std::sort(day_timeslots.begin(), day_timeslots.end());
+                    for (size_t i = 1; i < day_timeslots.size(); ++i) {
+                        if (day_timeslots[i] - day_timeslots[i-1] > 1) {
+                            has_gaps = true;
+                            break;
+                        }
+                    }
+                }
+                if (has_gaps) break;
             }
-            if (days_with_class >= 2) {
-                if (pref.gaps.value) student_fitness += pref.gaps.weight;
-                student_total_weight += pref.gaps.weight;
-            }
+            if (!has_gaps) student_fitness += pref.no_gaps;
+            student_total_weight += pref.no_gaps;
         }
 
         if (student_total_weight > 0) {
@@ -135,7 +146,7 @@ double Evaluator::evaluate(const Individual& individual) const {
     }
     double avg_student_fitness = total_student_fitness / problemData.getStudentsNum();
 
-    // Evaluate teachers
+    // evaluate teachers
     double total_teacher_fitness = 0.0;
     lastTeacherFitnesses.clear();
     for (int t = 0; t < problemData.getTeachersNum(); ++t) {
@@ -143,7 +154,7 @@ double Evaluator::evaluate(const Individual& individual) const {
         double teacher_total_weight = 0.0;
         const auto& pref = problemData.getTeachersPreferences()[t];
 
-        // Get teacher timeslots
+        // get teacher timeslots
         std::set<int> teacher_timeslots;
         for (int g : problemData.getTeachersGroups()[t]) {
             int timeslot = group_assignments[g].first;
@@ -176,20 +187,31 @@ double Evaluator::evaluate(const Individual& individual) const {
             }
         }
 
-        // gaps (simplified)
-        if (pref.gaps.weight > 0) {
-            int days_with_class = 0;
+        // no_gaps (simplified: award points if teacher has no gaps in their schedule)
+        if (pref.no_gaps > 0) {
+            bool has_gaps = false;
+            // check each day for gaps
             for (int d = 0; d < problemData.getDaysNum(); ++d) {
-                bool has = false;
+                std::vector<int> day_timeslots;
                 for (int ts = cum_timeslots[d]; ts < cum_timeslots[d + 1]; ++ts) {
-                    if (teacher_timeslots.count(ts)) has = true;
+                    if (teacher_timeslots.count(ts)) {
+                        day_timeslots.push_back(ts);
+                    }
                 }
-                if (has) days_with_class++;
+                // if teacher has classes on this day, check for gaps
+                if (day_timeslots.size() > 1) {
+                    std::sort(day_timeslots.begin(), day_timeslots.end());
+                    for (size_t i = 1; i < day_timeslots.size(); ++i) {
+                        if (day_timeslots[i] - day_timeslots[i-1] > 1) {
+                            has_gaps = true;
+                            break;
+                        }
+                    }
+                }
+                if (has_gaps) break;
             }
-            if (days_with_class >= 2) {
-                if (pref.gaps.value) teacher_fitness += pref.gaps.weight;
-                teacher_total_weight += pref.gaps.weight;
-            }
+            if (!has_gaps) teacher_fitness += pref.no_gaps;
+            teacher_total_weight += pref.no_gaps;
         }
 
         // preferred_timeslots
@@ -215,7 +237,7 @@ double Evaluator::evaluate(const Individual& individual) const {
     }
     double avg_teacher_fitness = total_teacher_fitness / problemData.getTeachersNum();
 
-    // Evaluate management
+    // evaluate management
     double management_fitness = 0.0;
     double management_total_weight = 0.0;
     const auto& pref = problemData.getManagementPreferences();
@@ -264,6 +286,7 @@ double Evaluator::evaluate(const Individual& individual) const {
 bool Evaluator::repair(Individual& individual) const {
 
     // TODO: probably should make it a void, which works on original individual by reference
+    // UPDATE: returns true if any repairs were made (works on original individual now)
 
     if (!problemData.isFeasible()) {
         Logger::warn("ProblemData is not feasible. Repair is not possible.");

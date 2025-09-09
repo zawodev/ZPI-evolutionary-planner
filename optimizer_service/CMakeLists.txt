@@ -23,8 +23,10 @@ include_directories(include)
 set(SOURCES
     src/main.cpp
     src/event/EventReceiver.cpp
+    src/event/EventSender.cpp
     src/model/Individual.cpp
     src/model/ProblemData.cpp
+    src/model/EventModels.cpp
     src/optimization/Evaluator.cpp
     src/optimization/ExampleGeneticAlgorithm.cpp
     src/optimization/ZawodevGeneticAlgorithm.cpp

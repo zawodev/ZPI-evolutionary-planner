@@ -2,6 +2,7 @@
 #include <random>
 #include <algorithm>
 #include <numeric>
+#include <sstream>
 #include "utils/Logger.hpp"
 
 RawProblemData TestCaseGenerator::generate(int numStudents, int numGroups, int numSubjects, int numRooms, int numTeachers, int numTimeslots, int totalGroupCapacity) {
@@ -148,9 +149,8 @@ RawProblemData TestCaseGenerator::generate(int numStudents, int numGroups, int n
                 }
             }
 
-            // gaps
-            sp.gaps.value = dist_bool(gen);
-            sp.gaps.weight = dist_weight(gen);
+            // no_gaps
+            sp.no_gaps = dist_weight(gen);
 
             // preferred_groups, avoid_groups: for each subject of student
             int num_subj = static_cast<int>(data.students_subjects[s].size());
@@ -215,9 +215,8 @@ RawProblemData TestCaseGenerator::generate(int numStudents, int numGroups, int n
                 }
             }
 
-            // gaps
-            tp.gaps.value = dist_bool(gen);
-            tp.gaps.weight = dist_weight(gen);
+            // no_gaps
+            tp.no_gaps = dist_weight(gen);
 
             // preferred_timeslots, avoid_timeslots: for each group they teach
             int num_grps = static_cast<int>(data.teachers_groups[t].size());
@@ -273,5 +272,29 @@ RawProblemData TestCaseGenerator::generate(int numStudents, int numGroups, int n
     catch (const std::exception& e) {
         Logger::error("Error in TestCaseGenerator::generate: " + std::string(e.what()));
         return RawProblemData{};
+    }
+}
+
+RawJobData TestCaseGenerator::generateJob(int numStudents, int numGroups, int numSubjects, int numRooms, int numTeachers, int numTimeslots, int totalGroupCapacity, int maxExecutionTime) {
+    try {
+        // generate problem data
+        RawProblemData problemData = generate(numStudents, numGroups, numSubjects, numRooms, numTeachers, numTimeslots, totalGroupCapacity);
+        
+        // generate random job id
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> dist_id(1000, 9999);
+        
+        std::stringstream ss;
+        ss << "test_job_" << std::time(nullptr) << "_" << dist_id(gen);
+        std::string jobId = ss.str();
+        
+        Logger::info("Generated job with ID: " + jobId + " and max execution time: " + std::to_string(maxExecutionTime) + " seconds");
+        
+        return RawJobData(jobId, problemData, maxExecutionTime);
+    }
+    catch (const std::exception& e) {
+        Logger::error("Error in TestCaseGenerator::generateJob: " + std::string(e.what()));
+        return RawJobData{};
     }
 }

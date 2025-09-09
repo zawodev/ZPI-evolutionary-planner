@@ -1,4 +1,5 @@
 #include "utils/JsonParser.hpp"
+#include "model/EventModels.hpp"
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <iostream>
@@ -55,14 +56,16 @@ static std::vector<RoomTimeslotPreference> parse_management_room_timeslots(const
     return out;
 }
 
-RawProblemData JsonParser::parseInput(const std::string& filename) {
+
+
+
+// --------------- input and output json data conversion functions ---------------
+
+
+
+
+RawProblemData JsonParser::toRawProblemData(const nlohmann::json& j) {
     try {
-        std::ifstream in(filename);
-        if (!in) {
-            throw std::runtime_error("Cannot open file: " + filename);
-        }
-        json j;
-        in >> j;
         RawProblemData data;
         // constraints
         const auto& c = j.at("constraints");
@@ -72,6 +75,7 @@ RawProblemData JsonParser::parseInput(const std::string& filename) {
         data.students_subjects = c.at("students_subjects").get<std::vector<std::vector<int>>>();
         data.teachers_groups = c.at("teachers_groups").get<std::vector<std::vector<int>>>();
         data.rooms_unavailability_timeslots = c.at("rooms_unavailability_timeslots").get<std::vector<std::vector<int>>>();
+        
         // preferences
         const auto& p = j.at("preferences");
         if (p.contains("students")) {
@@ -79,8 +83,7 @@ RawProblemData JsonParser::parseInput(const std::string& filename) {
                 StudentPreference sp;
                 sp.free_days = s.at("free_days").get<std::vector<int>>();
                 sp.busy_days = s.at("busy_days").get<std::vector<int>>();
-                sp.gaps.value = s.at("gaps").at("value").get<bool>();
-                sp.gaps.weight = s.at("gaps").at("weight").get<int>();
+                sp.no_gaps = s.at("no_gaps").get<int>();
                 sp.preferred_groups = parse_pref_map(s.at("preferred_groups"));
                 sp.avoid_groups = parse_pref_map(s.at("avoid_groups"));
                 sp.preferred_timeslots = parse_pref_map(s.at("preferred_timeslots"));
@@ -93,8 +96,7 @@ RawProblemData JsonParser::parseInput(const std::string& filename) {
                 TeacherPreference tp;
                 tp.free_days = t.at("free_days").get<std::vector<int>>();
                 tp.busy_days = t.at("busy_days").get<std::vector<int>>();
-                tp.gaps.value = t.at("gaps").at("value").get<bool>();
-                tp.gaps.weight = t.at("gaps").at("weight").get<int>();
+                tp.no_gaps = t.at("no_gaps").get<int>();
                 tp.preferred_timeslots = parse_pref_map(t.at("preferred_timeslots"));
                 tp.avoid_timeslots = parse_pref_map(t.at("avoid_timeslots"));
                 data.teachers_preferences.push_back(tp);
@@ -118,73 +120,191 @@ RawProblemData JsonParser::parseInput(const std::string& filename) {
     }
 }
 
-void JsonParser::writeOutput(const std::string& filename, const Individual& individual, const ProblemData& data, const Evaluator& evaluator) {
-    try {
-        fs::path outPath(filename);
-        if (!outPath.parent_path().empty() && !fs::exists(outPath.parent_path())) {
-            fs::create_directories(outPath.parent_path());
-        }
-        std::ofstream out(filename);
-        if (!out) {
-            throw std::runtime_error("Cannot open file for writing: " + filename);
-        }
-
-        double fitness = evaluator.evaluate(individual);
-
-        json j;
-        int studentsNum = data.getStudentsNum();
-        int groupsNum = data.getGroupsNum();
-
-        // Validate genotype size
-        int expected_size = evaluator.getTotalGenes();
-        if (individual.genotype.size() != expected_size) {
-            throw std::runtime_error("Invalid genotype size: " + std::to_string(individual.genotype.size()) + ", expected: " + std::to_string(expected_size));
-        }
-
-        std::vector<std::vector<int>> by_student;
-        int idx = 0;
-        for (int s = 0; s < studentsNum; ++s) {
-            std::vector<int> student_groups;
-            int num_groups_for_student = data.getGroupsForStudent(s);
-            for (int g = 0; g < num_groups_for_student; ++g) {
-                student_groups.push_back(individual.genotype[idx++]);
+nlohmann::json JsonParser::toJson(const RawProblemData& data) {
+    json j;
+    // constraints
+    j["constraints"]["timeslots_per_day"] = data.timeslots_per_day;
+    j["constraints"]["groups_per_subject"] = data.groups_per_subject;
+    j["constraints"]["groups_soft_capacity"] = data.groups_soft_capacity;
+    j["constraints"]["students_subjects"] = data.students_subjects;
+    j["constraints"]["teachers_groups"] = data.teachers_groups;
+    j["constraints"]["rooms_unavailability_timeslots"] = data.rooms_unavailability_timeslots;
+    
+    // preferences
+    if (!data.students_preferences.empty()) {
+        for (const auto& sp : data.students_preferences) {
+            json s;
+            s["free_days"] = sp.free_days;
+            s["busy_days"] = sp.busy_days;
+            s["no_gaps"] = sp.no_gaps;
+            s["preferred_groups"] = json::object();
+            for (const auto& p : sp.preferred_groups) {
+                s["preferred_groups"][std::to_string(p.first)] = p.second;
             }
-            by_student.push_back(student_groups);
+            s["avoid_groups"] = json::object();
+            for (const auto& p : sp.avoid_groups) {
+                s["avoid_groups"][std::to_string(p.first)] = p.second;
+            }
+            s["preferred_timeslots"] = json::object();
+            for (const auto& p : sp.preferred_timeslots) {
+                s["preferred_timeslots"][std::to_string(p.first)] = p.second;
+            }
+            s["avoid_timeslots"] = json::object();
+            for (const auto& p : sp.avoid_timeslots) {
+                s["avoid_timeslots"][std::to_string(p.first)] = p.second;
+            }
+            j["preferences"]["students"].push_back(s);
         }
-
-        std::vector<std::vector<int>> by_group;
-        for (int g = 0; g < groupsNum; ++g) {
-            int timeslot = individual.genotype[idx++];
-            int room = individual.genotype[idx++];
-            by_group.push_back({timeslot, room});
+    }
+    if (!data.teachers_preferences.empty()) {
+        for (const auto& tp : data.teachers_preferences) {
+            json t;
+            t["free_days"] = tp.free_days;
+            t["busy_days"] = tp.busy_days;
+            t["no_gaps"] = tp.no_gaps;
+            t["preferred_timeslots"] = json::object();
+            for (const auto& p : tp.preferred_timeslots) {
+                t["preferred_timeslots"][std::to_string(p.first)] = p.second;
+            }
+            t["avoid_timeslots"] = json::object();
+            for (const auto& p : tp.avoid_timeslots) {
+                t["avoid_timeslots"][std::to_string(p.first)] = p.second;
+            }
+            j["preferences"]["teachers"].push_back(t);
         }
+    }
+    if (!data.management_preferences.preferred_room_timeslots.empty() ||
+        !data.management_preferences.avoid_room_timeslots.empty() ||
+        data.management_preferences.group_max_overflow.weight != 0) {
+        if (!data.management_preferences.preferred_room_timeslots.empty()) {
+            for (const auto& mp : data.management_preferences.preferred_room_timeslots) {
+                json obj;
+                obj["room"] = mp.room;
+                obj["timeslot"] = mp.timeslot;
+                obj["weight"] = mp.weight;
+                j["preferences"]["management"]["preferred_room_timeslots"].push_back(obj);
+            }
+        }
+        if (!data.management_preferences.avoid_room_timeslots.empty()) {
+            for (const auto& mp : data.management_preferences.avoid_room_timeslots) {
+                json obj;
+                obj["room"] = mp.room;
+                obj["timeslot"] = mp.timeslot;
+                obj["weight"] = mp.weight;
+                j["preferences"]["management"]["avoid_room_timeslots"].push_back(obj);
+            }
+        }
+        if (data.management_preferences.group_max_overflow.weight != 0) {
+            j["preferences"]["management"]["group_max_overflow"]["value"] = data.management_preferences.group_max_overflow.value;
+            j["preferences"]["management"]["group_max_overflow"]["weight"] = data.management_preferences.group_max_overflow.weight;
+        }
+    }
+    return j;
+}
 
-        j["genotype"] = individual.genotype;
-        j["fitness"] = fitness;
-        j["by_student"] = by_student;
-        j["by_group"] = by_group;
-        j["student_fitnesses"] = evaluator.getLastStudentFitnesses();
-        j["teacher_fitnesses"] = evaluator.getLastTeacherFitnesses();
-        j["management_fitness"] = evaluator.getLastManagementFitness();
-
-        //old style (ugly print)
-        //out << j.dump(2);
-
-        //manual pretty print to avoid issues with large arrays in one line
-        std::string json_str = "{\n";
-        json_str += "  \"genotype\": " + j["genotype"].dump() + ",\n";
-        json_str += "  \"fitness\": " + std::to_string(j["fitness"].get<double>()) + ",\n";
-        json_str += "  \"by_student\": " + formatVectorOfVectors(json(by_student), 4) + ",\n";
-        json_str += "  \"by_group\": " + formatVectorOfVectors(json(by_group), 4) + ",\n";
-        json_str += "  \"student_fitnesses\": " + j["student_fitnesses"].dump() + ",\n";
-        json_str += "  \"teacher_fitnesses\": " + j["teacher_fitnesses"].dump() + ",\n";
-        json_str += "  \"management_fitness\": " + std::to_string(j["management_fitness"].get<double>()) + "\n";
-        json_str += "}\n";
-        out << json_str;
+RawSolutionData JsonParser::toRawSolutionData(const nlohmann::json& jsonData) {
+    try {
+        RawSolutionData solutionData;
+        solutionData.genotype = jsonData.at("genotype").get<std::vector<int>>();
+        solutionData.fitness = jsonData.at("fitness").get<double>();
+        solutionData.by_student = jsonData.at("by_student").get<std::vector<std::vector<int>>>();
+        solutionData.by_group = jsonData.at("by_group").get<std::vector<std::vector<int>>>();
+        solutionData.student_fitnesses = jsonData.at("student_fitnesses").get<std::vector<double>>();
+        solutionData.teacher_fitnesses = jsonData.at("teacher_fitnesses").get<std::vector<double>>();
+        solutionData.management_fitness = jsonData.at("management_fitness").get<double>();
+        return solutionData;
     } catch (const std::exception& e) {
-        throw std::runtime_error(std::string("JSON write error: ") + e.what());
+        throw std::runtime_error("Failed to parse solution data: " + std::string(e.what()));
     }
 }
+
+nlohmann::json JsonParser::toJson(const RawSolutionData& data) {
+    json j;
+    j["genotype"] = data.genotype;
+    j["fitness"] = data.fitness;
+    j["by_student"] = data.by_student;
+    j["by_group"] = data.by_group;
+    j["student_fitnesses"] = data.student_fitnesses;
+    j["teacher_fitnesses"] = data.teacher_fitnesses;
+    j["management_fitness"] = data.management_fitness;
+    return j;
+}
+
+
+
+
+// --------------- event based json data conversion functions ---------------
+
+
+
+
+RawJobData JsonParser::toRawJobData(const nlohmann::json& jsonData) {
+    try {
+        RawJobData jobData;
+        jobData.job_id = jsonData.at("job_id").get<std::string>();
+        jobData.max_execution_time = jsonData.value("max_execution_time", 300);
+        jobData.problem_data = toRawProblemData(jsonData.at("problem_data"));
+        return jobData;
+    } catch (const std::exception& e) {
+        throw std::runtime_error("Failed to parse job data: " + std::string(e.what()));
+    }
+}
+
+nlohmann::json JsonParser::toJson(const RawJobData& jobData) {
+    json j;
+    j["job_id"] = jobData.job_id;
+    j["max_execution_time"] = jobData.max_execution_time;
+    j["problem_data"] = toJson(jobData.problem_data);
+    return j;
+}
+
+RawControlData JsonParser::toRawControlData(const nlohmann::json& jsonData) {
+    try {
+        RawControlData controlData;
+        controlData.job_id = jsonData.at("job_id").get<std::string>();
+        controlData.action = jsonData.at("action").get<std::string>();
+        controlData.data = jsonData.value("data", json::object());
+        return controlData;
+    } catch (const std::exception& e) {
+        throw std::runtime_error("Failed to parse control data: " + std::string(e.what()));
+    }
+}
+
+nlohmann::json JsonParser::toJson(const RawControlData& controlData) {
+    json j;
+    j["job_id"] = controlData.job_id;
+    j["action"] = controlData.action;
+    j["data"] = controlData.data;
+    return j;
+}
+
+RawProgressData JsonParser::toRawProgressData(const nlohmann::json& jsonData) {
+    try {
+        RawProgressData progressData;
+        progressData.job_id = jsonData.at("job_id").get<std::string>();
+        progressData.iteration = jsonData.at("iteration").get<int>();
+        progressData.best_solution = toRawSolutionData(jsonData.at("best_solution"));
+        return progressData;
+    } catch (const std::exception& e) {
+        throw std::runtime_error("Failed to parse progress data: " + std::string(e.what()));
+    }
+}
+
+nlohmann::json JsonParser::toJson(const RawProgressData& progressData) {
+    json j;
+    j["job_id"] = progressData.job_id;
+    j["iteration"] = progressData.iteration;
+    j["best_solution"] = toJson(progressData.best_solution);
+    return j;
+}
+
+
+
+
+// --------------- below to be removed ---------------
+
+
+
 
 void JsonParser::writeInput(const std::string& filename, const RawProblemData& data) {
     try {
@@ -196,88 +316,9 @@ void JsonParser::writeInput(const std::string& filename, const RawProblemData& d
         if (!out) {
             throw std::runtime_error("Cannot open file for writing: " + filename);
         }
-        json j;
-        // constraints
-        j["constraints"]["timeslots_per_day"] = data.timeslots_per_day;
-        j["constraints"]["groups_per_subject"] = data.groups_per_subject;
-        j["constraints"]["groups_soft_capacity"] = data.groups_soft_capacity;
-        j["constraints"]["students_subjects"] = data.students_subjects;
-        j["constraints"]["teachers_groups"] = data.teachers_groups;
-        j["constraints"]["rooms_unavailability_timeslots"] = data.rooms_unavailability_timeslots;
-        // preferences
-        if (!data.students_preferences.empty()) {
-            for (const auto& sp : data.students_preferences) {
-                json s;
-                s["free_days"] = sp.free_days;
-                s["busy_days"] = sp.busy_days;
-                s["gaps"]["value"] = sp.gaps.value;
-                s["gaps"]["weight"] = sp.gaps.weight;
-                s["preferred_groups"] = json::object();
-                for (const auto& p : sp.preferred_groups) {
-                    s["preferred_groups"][std::to_string(p.first)] = p.second;
-                }
-                s["avoid_groups"] = json::object();
-                for (const auto& p : sp.avoid_groups) {
-                    s["avoid_groups"][std::to_string(p.first)] = p.second;
-                }
-                s["preferred_timeslots"] = json::object();
-                for (const auto& p : sp.preferred_timeslots) {
-                    s["preferred_timeslots"][std::to_string(p.first)] = p.second;
-                }
-                s["avoid_timeslots"] = json::object();
-                for (const auto& p : sp.avoid_timeslots) {
-                    s["avoid_timeslots"][std::to_string(p.first)] = p.second;
-                }
-                j["preferences"]["students"].push_back(s);
-            }
-        }
-        if (!data.teachers_preferences.empty()) {
-            for (const auto& tp : data.teachers_preferences) {
-                json t;
-                t["free_days"] = tp.free_days;
-                t["busy_days"] = tp.busy_days;
-                t["gaps"]["value"] = tp.gaps.value;
-                t["gaps"]["weight"] = tp.gaps.weight;
-                t["preferred_timeslots"] = json::object();
-                for (const auto& p : tp.preferred_timeslots) {
-                    t["preferred_timeslots"][std::to_string(p.first)] = p.second;
-                }
-                t["avoid_timeslots"] = json::object();
-                for (const auto& p : tp.avoid_timeslots) {
-                    t["avoid_timeslots"][std::to_string(p.first)] = p.second;
-                }
-                j["preferences"]["teachers"].push_back(t);
-            }
-        }
-        if (!data.management_preferences.preferred_room_timeslots.empty() ||
-            !data.management_preferences.avoid_room_timeslots.empty() ||
-            data.management_preferences.group_max_overflow.weight != 0) {
-            if (!data.management_preferences.preferred_room_timeslots.empty()) {
-                for (const auto& mp : data.management_preferences.preferred_room_timeslots) {
-                    json obj;
-                    obj["room"] = mp.room;
-                    obj["timeslot"] = mp.timeslot;
-                    obj["weight"] = mp.weight;
-                    j["preferences"]["management"]["preferred_room_timeslots"].push_back(obj);
-                }
-            }
-            if (!data.management_preferences.avoid_room_timeslots.empty()) {
-                for (const auto& mp : data.management_preferences.avoid_room_timeslots) {
-                    json obj;
-                    obj["room"] = mp.room;
-                    obj["timeslot"] = mp.timeslot;
-                    obj["weight"] = mp.weight;
-                    j["preferences"]["management"]["avoid_room_timeslots"].push_back(obj);
-                }
-            }
-            if (data.management_preferences.group_max_overflow.weight != 0) {
-                j["preferences"]["management"]["group_max_overflow"]["value"] = data.management_preferences.group_max_overflow.value;
-                j["preferences"]["management"]["group_max_overflow"]["weight"] = data.management_preferences.group_max_overflow.weight;
-            }
-        }
-        //old style (ugly print)
-        //out << j.dump(2);
-
+        
+        json j = toJson(data);
+        
         //manual pretty print to avoid issues with large arrays in one line
         std::string json_str = "{\n";
         json_str += "  \"constraints\": {\n";
@@ -292,6 +333,56 @@ void JsonParser::writeInput(const std::string& filename, const RawProblemData& d
             json_str += ",\n  \"preferences\": " + j["preferences"].dump(2);
         }
         json_str += "\n}\n";
+        out << json_str;
+    } catch (const std::exception& e) {
+        throw std::runtime_error(std::string("JSON write error: ") + e.what());
+    }
+}
+
+void JsonParser::writeJobInput(const std::string& filename, const RawJobData& jobData) {
+    try {
+        fs::path outPath(filename);
+        if (!outPath.parent_path().empty() && !fs::exists(outPath.parent_path())) {
+            fs::create_directories(outPath.parent_path());
+        }
+        std::ofstream out(filename);
+        if (!out) {
+            throw std::runtime_error("Cannot open file for writing: " + filename);
+        }
+        
+        json j = toJson(jobData);
+        out << j.dump(2);
+    } catch (const std::exception& e) {
+        throw std::runtime_error(std::string("JSON write error: ") + e.what());
+    }
+}
+
+void JsonParser::writeOutput(const std::string& filename, const Individual& individual, const ProblemData& data, const Evaluator& evaluator) {
+    try {
+        // Create RawSolutionData from Individual
+        RawSolutionData solutionData(individual, data, evaluator);
+        
+        fs::path outPath(filename);
+        if (!outPath.parent_path().empty() && !fs::exists(outPath.parent_path())) {
+            fs::create_directories(outPath.parent_path());
+        }
+        std::ofstream out(filename);
+        if (!out) {
+            throw std::runtime_error("Cannot open file for writing: " + filename);
+        }
+
+        json j = toJson(solutionData);
+
+        //manual pretty print to avoid issues with large arrays in one line
+        std::string json_str = "{\n";
+        json_str += "  \"genotype\": " + j["genotype"].dump() + ",\n";
+        json_str += "  \"fitness\": " + std::to_string(j["fitness"].get<double>()) + ",\n";
+        json_str += "  \"by_student\": " + formatVectorOfVectors(j["by_student"], 4) + ",\n";
+        json_str += "  \"by_group\": " + formatVectorOfVectors(j["by_group"], 4) + ",\n";
+        json_str += "  \"student_fitnesses\": " + j["student_fitnesses"].dump() + ",\n";
+        json_str += "  \"teacher_fitnesses\": " + j["teacher_fitnesses"].dump() + ",\n";
+        json_str += "  \"management_fitness\": " + std::to_string(j["management_fitness"].get<double>()) + "\n";
+        json_str += "}\n";
         out << json_str;
     } catch (const std::exception& e) {
         throw std::runtime_error(std::string("JSON write error: ") + e.what());

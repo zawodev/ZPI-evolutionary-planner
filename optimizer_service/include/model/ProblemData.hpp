@@ -5,7 +5,7 @@
 struct StudentPreference {
     std::vector<int> free_days;
     std::vector<int> busy_days;
-    struct { bool value; int weight; } gaps;
+    int no_gaps;
     std::map<int, int> preferred_groups;
     std::map<int, int> avoid_groups;
     std::map<int, int> preferred_timeslots;
@@ -15,7 +15,7 @@ struct StudentPreference {
 struct TeacherPreference {
     std::vector<int> free_days;
     std::vector<int> busy_days;
-    struct { bool value; int weight; } gaps;
+    int no_gaps;
     std::map<int, int> preferred_timeslots;
     std::map<int, int> avoid_timeslots;
 };

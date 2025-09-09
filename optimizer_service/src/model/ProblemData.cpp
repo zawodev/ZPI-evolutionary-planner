@@ -41,8 +41,8 @@ ProblemData::ProblemData(const RawProblemData& input_data) : _rawData(input_data
         for (int val : pref.busy_days) {
             _student_weights_sums[s] += val;
         }
-        // sum gaps weight
-        _student_weights_sums[s] += pref.gaps.weight;
+        // sum no_gaps weight
+        _student_weights_sums[s] += pref.no_gaps;
         // sum preferred_groups values
         for (const auto& pair : pref.preferred_groups) {
             _student_weights_sums[s] += pair.second;

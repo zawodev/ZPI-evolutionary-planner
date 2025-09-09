@@ -1,177 +1,163 @@
 {
-  "constraints": {
-    "timeslots_per_day": [ 7, 7, 7, 7, 7, 0, 0 ],
-    "groups_per_subject": [ 3, 5, 2, 4 ],
-    "groups_soft_capacity": [ 30, 30, 30, 50, 50, 50, 50, 50, 20, 20, 40, 40, 40, 40 ],
-    "students_subjects": [
-      [ 0, 1, 2 ],
-      [ 1, 0, 2, 3 ],
-      [ 0, 2, 3 ]
-    ],
-    "teachers_groups": [
-      [ 0, 1 ],
-      [ 2, 3, 4 ],
-      [ 5, 6 ]
-    ],
-    "rooms_unavailability_timeslots": [
-      [ 12, 13 ],
-      [],
-      [ 5, 6, 7 ]
-    ]
-  },
-  "preferences": {
-    "students": [
-      {
-        "free_days": [ 5, 0, 2, 0, 0, 0, 0 ],
-        "busy_days": [ 0, 4, 0, 0, 0, 0, 0 ],
-        "gaps": {
-          "value": false,
-          "weight": 4
-        },
-        "preferred_groups": {
-          "0": 4, 
-          "2": 2
-        },
-        "avoid_groups": {
-          "3": 2, 
-          "5": 3
-        },
-        "preferred_timeslots": {
-          "5": 3, 
-          "6": 1
-        },
-        "avoid_timeslots": {
-          "7": 2, 
-          "4": 1
-        }
-      },
-      {
-        "free_days": [ 0, 0, 3, 0, 0, 0, 0 ],
-        "busy_days": [ 2, 0, 0, 0, 0, 0, 0 ],
-        "gaps": {
-          "value": true,
-          "weight": 2
-        },
-        "preferred_groups": {
-          "1": 3, 
-          "3": 1
-        },
-        "avoid_groups": {
-          "4": 2, 
-          "6": 1
-        },
-        "preferred_timeslots": {
-          "1": 2, 
-          "2": 3
-        },
-        "avoid_timeslots": {
-          "3": 1, 
-          "5": 2
-        }
-      },
-      {
-        "free_days": [ 0, 0, 0, 4, 0, 0, 0 ],
-        "busy_days": [ 0, 0, 2, 0, 0, 0, 0 ],
-        "gaps": {
-          "value": false,
-          "weight": 5
-        },
-        "preferred_groups": {
-          "0": 2, 
-          "4": 3
-        },
-        "avoid_groups": {
-          "1": 1, 
-          "7": 2
-        },
-        "preferred_timeslots": {
-          "3": 3, 
-          "4": 2
-        },
-        "avoid_timeslots": {
-          "6": 1, 
-          "2": 2
-        }
-      }
-    ],
-    "teachers": [
-      {
-        "free_days": [ 0, 0, 0, 4, 0, 0, 0 ],
-        "busy_days": [ 0, 0, 2, 0, 0, 0, 0 ],
-        "gaps": {
-          "value": false,
-          "weight": 5
-        },
-        "preferred_timeslots": {
-          "3": 3, 
-          "4": 2
-        },
-        "avoid_timeslots": {
-          "6": 1, 
-          "3": 2
-        }
-      },
-      {
-        "free_days": [ 5, 0, 2, 0, 0, 0, 0 ],
-        "busy_days": [ 0, 4, 0, 0, 0, 0, 0 ],
-        "gaps": {
-          "value": false,
-          "weight": 4
-        },
-        "preferred_timeslots": {
-          "5": 3, 
-          "6": 1
-        },
-        "avoid_timeslots": {
-          "7": 2, 
-          "4": 1
-        }
-      },
-      {
-        "free_days": [ 0, 0, 3, 0, 0, 0, 0 ],
-        "busy_days": [ 2, 0, 0, 0, 0, 0, 0 ],
-        "gaps": {
-          "value": true,
-          "weight": 2
-        },
-        "preferred_timeslots": {
-          "1": 1, 
-          "2": 2
-        },
-        "avoid_timeslots": {
-          "3": 1, 
-          "4": 2
-        }
-      }
-    ],
-    "management": {
-      "preferred_room_timeslots": [
+  "job_id": "easy_test_job_001",
+  "max_execution_time": 300,
+  "problem_data": {
+    "constraints": {
+      "timeslots_per_day": [ 7, 7, 7, 7, 7, 0, 0 ],
+      "groups_per_subject": [ 3, 5, 2, 4 ],
+      "groups_soft_capacity": [ 30, 30, 30, 50, 50, 50, 50, 50, 20, 20, 40, 40, 40, 40 ],
+      "students_subjects": [
+        [ 0, 1, 2 ],
+        [ 1, 0, 2, 3 ],
+        [ 0, 2, 3 ]
+      ],
+      "teachers_groups": [
+        [ 0, 1 ],
+        [ 2, 3, 4 ],
+        [ 5, 6 ]
+      ],
+      "rooms_unavailability_timeslots": [
+        [ 12, 13 ],
+        [],
+        [ 5, 6, 7 ]
+      ]
+    },
+    "preferences": {
+      "students": [
         {
-          "room": 0,
-          "timeslot": 1,
-          "weight": 2
+          "free_days": [ 5, 0, 2, 0, 0, 0, 0 ],
+          "busy_days": [ 0, 4, 0, 0, 0, 0, 0 ],
+          "no_gaps": 4,
+          "preferred_groups": {
+            "0": 4, 
+            "2": 2
+          },
+          "avoid_groups": {
+            "3": 2, 
+            "5": 3
+          },
+          "preferred_timeslots": {
+            "5": 3, 
+            "6": 1
+          },
+          "avoid_timeslots": {
+            "7": 2, 
+            "4": 1
+          }
         },
         {
-          "room": 1,
-          "timeslot": 3,
-          "weight": 1
+          "free_days": [ 0, 0, 3, 0, 0, 0, 0 ],
+          "busy_days": [ 2, 0, 0, 0, 0, 0, 0 ],
+          "no_gaps": 2,
+          "preferred_groups": {
+            "1": 3, 
+            "3": 1
+          },
+          "avoid_groups": {
+            "4": 2, 
+            "6": 1
+          },
+          "preferred_timeslots": {
+            "1": 2, 
+            "2": 3
+          },
+          "avoid_timeslots": {
+            "3": 1, 
+            "5": 2
+          }
+        },
+        {
+          "free_days": [ 0, 0, 0, 4, 0, 0, 0 ],
+          "busy_days": [ 0, 0, 2, 0, 0, 0, 0 ],
+          "no_gaps": 5,
+          "preferred_groups": {
+            "0": 2, 
+            "4": 3
+          },
+          "avoid_groups": {
+            "1": 1, 
+            "7": 2
+          },
+          "preferred_timeslots": {
+            "3": 3, 
+            "4": 2
+          },
+          "avoid_timeslots": {
+            "6": 1, 
+            "2": 2
+          }
         }
       ],
-      "avoid_room_timeslots": [
+      "teachers": [
         {
-          "room": 2,
-          "timeslot": 4,
-          "weight": 3
+          "free_days": [ 0, 0, 0, 4, 0, 0, 0 ],
+          "busy_days": [ 0, 0, 2, 0, 0, 0, 0 ],
+          "no_gaps": 5,
+          "preferred_timeslots": {
+            "3": 3, 
+            "4": 2
+          },
+          "avoid_timeslots": {
+            "6": 1, 
+            "3": 2
+          }
         },
         {
-          "room": 3,
-          "timeslot": 5,
-          "weight": 2
+          "free_days": [ 5, 0, 2, 0, 0, 0, 0 ],
+          "busy_days": [ 0, 4, 0, 0, 0, 0, 0 ],
+          "no_gaps": 4,
+          "preferred_timeslots": {
+            "5": 3, 
+            "6": 1
+          },
+          "avoid_timeslots": {
+            "7": 2, 
+            "4": 1
+          }
+        },
+        {
+          "free_days": [ 0, 0, 3, 0, 0, 0, 0 ],
+          "busy_days": [ 2, 0, 0, 0, 0, 0, 0 ],
+          "no_gaps": 2,
+          "preferred_timeslots": {
+            "1": 1, 
+            "2": 2
+          },
+          "avoid_timeslots": {
+            "3": 1, 
+            "4": 2
+          }
         }
       ],
-      "group_max_overflow": {
-        "value": 5,
-        "weight": 10
+      "management": {
+        "preferred_room_timeslots": [
+          {
+            "room": 0,
+            "timeslot": 1,
+            "weight": 2
+          },
+          {
+            "room": 1,
+            "timeslot": 3,
+            "weight": 1
+          }
+        ],
+        "avoid_room_timeslots": [
+          {
+            "room": 2,
+            "timeslot": 4,
+            "weight": 3
+          },
+          {
+            "room": 3,
+            "timeslot": 5,
+            "weight": 2
+          }
+        ],
+        "group_max_overflow": {
+          "value": 5,
+          "weight": 10
+        }
       }
     }
   }

@@ -1,10 +1,9 @@
 #pragma once
 #include "model/ProblemData.hpp"
+#include "model/EventModels.hpp"
 
 class TestCaseGenerator {
 public:
-    // Future: Generate random test cases based on parameters
-    // Parameters: numStudents, numGroups, numSubjects, numRooms, numTimeslots
-    // For now, this class is empty and will be implemented later.
+    RawJobData generateJob(int numStudents, int numGroups, int numSubjects, int numRooms, int numTeachers, int numTimeslots, int totalGroupCapacity, int maxExecutionTime = 300);
     RawProblemData generate(int numStudents, int numGroups, int numSubjects, int numRooms, int numTeachers, int numTimeslots, int totalGroupCapacity);
 };

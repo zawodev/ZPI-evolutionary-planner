@@ -1,4 +1,5 @@
 #include "event/EventReceiver.hpp"
+#include "event/EventSender.hpp"
 #include "optimization/Evaluator.hpp"
 #include "optimization/IGeneticAlgorithm.hpp"
 #include "optimization/ExampleGeneticAlgorithm.hpp"
@@ -8,6 +9,71 @@
 #include "utils/TestCaseGenerator.hpp"
 #include <iostream>
 #include <memory>
+#include <chrono>
+#include <thread>
+
+void processJob(EventReceiver& receiver, EventSender& sender) {
+    RawJobData jobData = receiver.receive();
+    Logger::info("Received job: " + jobData.job_id + ", with max execution time: " + std::to_string(jobData.max_execution_time) + " seconds");
+
+    ProblemData data(jobData.problem_data);
+    if (!data.isFeasible()) {
+        Logger::error("Problem is not solvable for job: " + jobData.job_id);
+        return;
+    }
+
+    std::string debugMsg = "Job " + jobData.job_id + " - ProblemData with " + 
+                           std::to_string(data.getStudentsNum()) + " students, " +
+                           std::to_string(data.getGroupsNum()) + " groups, " +
+                           std::to_string(data.getSubjectsNum()) + " subjects, " +
+                           std::to_string(data.getRoomsNum()) + " rooms, " +
+                           std::to_string(data.getTeachersNum()) + " teachers, and " +
+                           std::to_string(data.totalTimeslots()) + " total timeslots.";
+    Logger::info(debugMsg);
+
+    Evaluator evaluator(data);
+    std::unique_ptr<IGeneticAlgorithm> geneticAlgorithm = std::make_unique<ZawodevGeneticAlgorithm>();
+    Logger::info("Using genetic algorithm: " + std::string(typeid(*geneticAlgorithm).name()));
+    
+    //int seed = 42;
+    int seed = std::random_device{}();
+    geneticAlgorithm->Init(data, evaluator, seed);
+    Logger::info("Genetic algorithm initialization complete. Starting iterations...");
+
+    // track exec time
+    auto startTime = std::chrono::steady_clock::now();
+    auto maxDuration = std::chrono::seconds(jobData.max_execution_time);
+
+    Individual bestIndividual;
+    for (int iterNum = 0; true; ++iterNum) {
+        bool shouldBreak = false;
+        bestIndividual = geneticAlgorithm->RunIteration(iterNum);
+        Logger::info("Iteration " + std::to_string(iterNum) + ", best fitness: " + std::to_string(bestIndividual.fitness));
+ 
+        // check for cancel event
+        if (receiver.checkForCancellation()) {
+            Logger::warn("Job " + jobData.job_id + " cancelled at iteration " + std::to_string(iterNum));
+            shouldBreak = true;
+        }
+        
+        // check max time limit
+        auto currentTime = std::chrono::steady_clock::now();
+        if (currentTime - startTime >= maxDuration) {
+            Logger::warn("Job " + jobData.job_id + " reached maximum execution time at iteration " + std::to_string(iterNum));
+            shouldBreak = true;
+        }
+
+        // send progress update
+        RawSolutionData solutionData(bestIndividual, data, evaluator);
+        RawProgressData progressData(jobData.job_id, shouldBreak ? -1 : iterNum, solutionData);
+        sender.sendProgress(progressData);
+
+        if (shouldBreak) break;
+    }
+
+    Logger::info("Optimization complete for job: " + jobData.job_id);
+}
+
 
 void testGenerateAndSave() {
     TestCaseGenerator generator;
@@ -18,59 +84,47 @@ void testGenerateAndSave() {
     int numTeachers = 1;
     int numTimeslots = 25;
     int totalGroupCapacity = 260;
-    RawProblemData testData = generator.generate(numStudents, numGroups, numSubjects, numRooms, numTeachers, numTimeslots, totalGroupCapacity);
-    JsonParser::writeInput("data/generated_input.json", testData);
-    Logger::info("Generated test data saved to data/generated_input.json");
+    int executionTime = 60;
+
+    RawJobData testJob = generator.generateJob(numStudents, numGroups, numSubjects, numRooms, numTeachers, numTimeslots, totalGroupCapacity, executionTime);
+    
+    std::string filename = "data/test_job_1.json";
+    JsonParser::writeJobInput(filename, testJob);
+    Logger::info("Generated test job saved to " + filename);
 }
 
 int main() {
     try {
-        Logger::info("Starting Optimizer Service...");
         //testGenerateAndSave();
         //return 0;
+        Logger::info("Starting Optimizer Service...");
 
-        // Data from input.json
-        FileEventReceiver receiver("data/input.json"); // path to input file
-        RawProblemData rawFileData = receiver.receive();
-
-        // Randomly generated data for testing
-        // TestCaseGenerator generator;
-        // RawProblemData rawGenData = generator.generate(100, 50, 10, 20, 10, 25, 2000); // example values
-
-        ProblemData data(rawFileData);
-        if (!data.isFeasible()) {
-            Logger::error("Problem is not solvable. Exiting.");
-            return 1;
-        }
-
-        std::string debugMsg = "Received ProblemData with " + std::to_string(data.getStudentsNum()) + " students, " +
-                               std::to_string(data.getGroupsNum()) + " groups, " +
-                               std::to_string(data.getSubjectsNum()) + " subjects, " +
-                               std::to_string(data.getRoomsNum()) + " rooms, " +
-                               std::to_string(data.getTeachersNum()) + " teachers, and " +
-                               std::to_string(data.totalTimeslots()) + " total timeslots.";
-        Logger::info(debugMsg);
-
-        Evaluator evaluator(data);
-        std::unique_ptr<IGeneticAlgorithm> geneticAlgorithm = std::make_unique<ExampleGeneticAlgorithm>();
-        Logger::info("Using genetic algorithm: " + std::string(typeid(*geneticAlgorithm).name()));
+        std::unique_ptr<EventReceiver> receiver = std::make_unique<FileEventReceiver>("data/input");
+        // std::unique_ptr<EventReceiver> receiver = std::make_unique<RabbitMQEventReceiver>("amqp://localhost");
         
-        int seed = std::random_device{}();
-        //int seed = 42;
-        geneticAlgorithm->Init(data, evaluator, seed);
-        Logger::info("Genetic algorithm initialization complete. Starting iterations...");
+        std::unique_ptr<EventSender> sender = std::make_unique<FileEventSender>("data/output");
+        // std::unique_ptr<EventSender> sender = std::make_unique<RabbitMQEventSender>("amqp://localhost");
 
-        Individual bestIndividual;
-        for (int i = 0; i < 10; ++i) {
-            bestIndividual = geneticAlgorithm->RunIteration(i);
-            Logger::info("Iteration " + std::to_string(i) + ", best fitness: " + std::to_string(bestIndividual.fitness));
+        Logger::info("Optimizer service started. Waiting for jobs...");
+
+        // main service loop
+        while (true) {
+            try {
+                if (receiver->hasMoreJobs()) {
+                    processJob(*receiver, *sender);
+                } else {
+                    Logger::info("No more jobs available. Waiting...");
+                    std::this_thread::sleep_for(std::chrono::seconds(5));
+                }
+            } catch (const std::exception& e) {
+                Logger::error("Error processing job: " + std::string(e.what()));
+                // we should probably continue with next job instead of terminating
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+            }
         }
-
-        JsonParser::writeOutput("data/output.json", bestIndividual, data, evaluator);
-        Logger::info("Optimization complete. Output written to data/output.json");
     } 
     catch (const std::exception& e) {
-        Logger::error(e.what());
+        Logger::error("Fatal error in optimizer service: " + std::string(e.what()));
         return 1;
     }
     return 0;

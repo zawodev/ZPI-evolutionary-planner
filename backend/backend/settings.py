@@ -10,23 +10,28 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env file
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-fox!l)hq#5q5sq_s^y^nfxygp4jcj=t23vd&n1wxgqf&l37m+p'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-fox!l)hq#5q5sq_s^y^nfxygp4jcj=t23vd&n1wxgqf&l37m+p')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = []
-
+allowed_hosts = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1')
+ALLOWED_HOSTS = [host.strip() for host in allowed_hosts.split(',')]
 
 # Application definition
 
@@ -37,9 +42,19 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    # third party apps
+    'rest_framework',
+    'corsheaders',
+    'channels',
+    'drf_spectacular',
+    
+    # local apps
+    'optimizer',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -120,3 +135,79 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Django REST Framework
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+}
+
+# API Documentation
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Evolutiany Planner API',
+    'DESCRIPTION': 'API for managing optimization jobs and monitoring their progress',
+    'VERSION': '1.0.1',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SCHEMA_PATH_PREFIX': '/api/v1/',
+}
+
+# CORS settings
+cors_origins = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000,http://localhost:8080,http://127.0.0.1:8080')
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins.split(',')]
+
+CORS_ALLOW_CREDENTIALS = True
+
+# Channels configuration
+ASGI_APPLICATION = 'backend.asgi.application'
+
+# Redis configuration
+USE_REDIS = os.getenv('USE_REDIS', 'True').lower() == 'true'
+REDIS_HOST = os.getenv('REDIS_HOST', '127.0.0.1')
+REDIS_PORT = int(os.getenv('REDIS_PORT', '6379'))
+REDIS_DB = int(os.getenv('REDIS_DB', '0'))
+
+if USE_REDIS:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                "hosts": [(REDIS_HOST, REDIS_PORT)],
+            },
+        },
+    }
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}',
+        }
+    }
+else:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        },
+    }
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        }
+    }
+
+# RabbitMQ configuration
+RABBITMQ_HOST = os.getenv('RABBITMQ_HOST', 'localhost')
+RABBITMQ_PORT = int(os.getenv('RABBITMQ_PORT', '5672'))
+RABBITMQ_USERNAME = os.getenv('RABBITMQ_USERNAME', 'guest')
+RABBITMQ_PASSWORD = os.getenv('RABBITMQ_PASSWORD', 'guest')
+RABBITMQ_VHOST = os.getenv('RABBITMQ_VHOST', '/')
+
+# RabbitMQ queue names
+OPTIMIZER_QUEUE = os.getenv('OPTIMIZER_QUEUE', 'optimizer_jobs')
+PROGRESS_QUEUE = os.getenv('PROGRESS_QUEUE', 'optimizer_progress')
+CONTROL_QUEUE = os.getenv('CONTROL_QUEUE', 'optimizer_control')
