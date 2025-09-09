@@ -92,10 +92,10 @@ RedisEventReceiver::~RedisEventReceiver() {
 }
 
 void RedisEventReceiver::parseConnectionString() {
-    // Parse connection string: "redis://host:port" or "host:port"
+    // parse connection string: "redis://host:port" or "host:port"
     std::string connStr = connectionString_;
     if (connStr.find("redis://") == 0) {
-        connStr = connStr.substr(8); // Remove "redis://"
+        connStr = connStr.substr(8); // remove "redis://"
     }
     
     size_t colonPos = connStr.find(':');
@@ -117,16 +117,17 @@ void RedisEventReceiver::connect() {
     Logger::info("Redis host: " + host_ + ", port: " + port_);
     
     try {
-        // Create Redis connection using redis-plus-plus
+        // create redis connection using redis-plus-plus
         sw::redis::ConnectionOptions connection_options;
         connection_options.host = host_;
         connection_options.port = std::stoi(port_);
-        connection_options.socket_timeout = std::chrono::milliseconds(1000);
+        // no socket_timeout to allow BRPOP to wait infinitely
+        // connection_options.socket_timeout = std::chrono::milliseconds(1000);
         
         auto* redis = new sw::redis::Redis(connection_options);
         redisConnection_ = redis;
         
-        // Test connection
+        // test connection
         redis->ping();
         
         Logger::info("Successfully connected to Redis");
@@ -153,23 +154,28 @@ RawJobData RedisEventReceiver::receive() {
     auto* redis = static_cast<sw::redis::Redis*>(redisConnection_);
     
     try {
-        // Use BRPOP to block and wait for a job (timeout: 0 = wait indefinitely)
-        auto result = redis->brpop(jobQueue_, std::chrono::seconds(0));
-        
-        if (!result) {
-            throw std::runtime_error("BRPOP returned null result");
+        // use BRPOP with short timeout in a loop to allow cancellation checking
+        while (true) {
+            auto result = redis->brpop(jobQueue_, std::chrono::seconds(1)); // timout 1s
+            
+            if (result) {
+                std::string messageBody = result->second;
+                Logger::info("Received job message from Redis: " + messageBody.substr(0, 200) + "...");
+                
+                // parse JSON message
+                json j = json::parse(messageBody);
+                RawJobData jobData = JsonParser::toRawJobData(j);
+                currentJobId_ = jobData.job_id;
+                
+                Logger::info("Successfully received job: " + jobData.job_id);
+                return jobData;
+            }
+            
+            // no job received within timeout, check for cancellation and continue waiting
+            if (cancelRequested_.load()) {
+                throw std::runtime_error("Job receiving cancelled");
+            }
         }
-        
-        std::string messageBody = result->second;
-        Logger::info("Received job message from Redis: " + messageBody.substr(0, 200) + "...");
-        
-        // Parse JSON message
-        json j = json::parse(messageBody);
-        RawJobData jobData = JsonParser::toRawJobData(j);
-        currentJobId_ = jobData.job_id;
-        
-        Logger::info("Successfully received job: " + jobData.job_id);
-        return jobData;
         
     } catch (const std::exception& e) {
         throw std::runtime_error("Redis BRPOP failed: " + std::string(e.what()));

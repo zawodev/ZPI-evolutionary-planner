@@ -75,10 +75,10 @@ RedisEventSender::~RedisEventSender() {
 }
 
 void RedisEventSender::parseConnectionString() {
-    // Parse connection string: "redis://host:port" or "host:port"
+    // parse connection string: "redis://host:port" or "host:port"
     std::string connStr = connectionString_;
     if (connStr.find("redis://") == 0) {
-        connStr = connStr.substr(8); // Remove "redis://"
+        connStr = connStr.substr(8); // remove "redis://"
     }
     
     size_t colonPos = connStr.find(':');
@@ -100,7 +100,7 @@ void RedisEventSender::connect() {
     Logger::info("Redis host: " + host_ + ", port: " + port_);
     
     try {
-        // Create Redis connection using redis-plus-plus
+        // create Redis connection using redis-plus-plus
         sw::redis::ConnectionOptions connection_options;
         connection_options.host = host_;
         connection_options.port = std::stoi(port_);
@@ -109,7 +109,7 @@ void RedisEventSender::connect() {
         auto* redis = new sw::redis::Redis(connection_options);
         redisConnection_ = redis;
         
-        // Test connection
+        // test connection
         redis->ping();
         
         Logger::info("Successfully connected to Redis");
@@ -137,15 +137,15 @@ void RedisEventSender::sendProgress(const RawProgressData& progress) {
     auto* redis = static_cast<sw::redis::Redis*>(redisConnection_);
     
     try {
-        // Convert progress to JSON
+        // convert progress to JSON
         json progressJson = JsonParser::toJson(progress);
         std::string messageBody = progressJson.dump();
         
-        // Store progress in Redis key (optimizer:progress:{id})
+        // store progress in redis key (optimizer:progress:{id})
         std::string progressKey = progressKeyPrefix_ + progress.job_id;
         redis->set(progressKey, messageBody);
         
-        // Publish progress update notification (optimizer:progress:updates)
+        // publish progress update notification (optimizer:progress:updates)
         auto subscribers = redis->publish(progressChannel_, messageBody);
         
         Logger::info("Successfully sent progress for job: " + progress.job_id + 

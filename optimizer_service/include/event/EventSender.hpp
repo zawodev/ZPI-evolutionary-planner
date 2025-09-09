@@ -34,7 +34,7 @@ private:
     std::string connectionString_;
     std::string progressKeyPrefix_;
     std::string progressChannel_;
-    void* redisConnection_;  // Redis connection (forward declaration)
+    void* redisConnection_;
     std::string host_;
     std::string port_;
     

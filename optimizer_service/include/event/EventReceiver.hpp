@@ -49,7 +49,7 @@ private:
     std::string connectionString_;
     std::string jobQueue_;
     std::string cancelKeyPrefix_;
-    void* redisConnection_;  // Redis connection (forward declaration)
+    void* redisConnection_;
     std::atomic<bool> cancelRequested_;
     std::string currentJobId_;
     std::string host_;
