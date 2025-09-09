@@ -2,6 +2,7 @@
 # project specific logic here.
 #
 cmake_minimum_required (VERSION 3.10)
+cmake_policy(VERSION 3.20)
 
 project(optimizer_service LANGUAGES CXX)
 
@@ -16,6 +17,39 @@ FetchContent_Declare(
   GIT_TAG v3.11.3
 )
 FetchContent_MakeAvailable(nlohmann_json)
+
+# hiredis (dependency for redis-plus-plus)
+FetchContent_Declare(
+  hiredis
+  GIT_REPOSITORY https://github.com/redis/hiredis.git
+  GIT_TAG master
+)
+
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(ENABLE_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(DISABLE_TESTS ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(hiredis)
+
+# kopiowanie nagłówków hiredis do include/hiredis w buildzie
+file(MAKE_DIRECTORY "${hiredis_BINARY_DIR}/include/hiredis")
+file(GLOB HIREDIS_HEADERS "${hiredis_SOURCE_DIR}/*.h")
+file(COPY ${HIREDIS_HEADERS} DESTINATION "${hiredis_BINARY_DIR}/include/hiredis")
+set(HIREDIS_INCLUDE_DIR "${hiredis_BINARY_DIR}/include")
+include_directories(${hiredis_BINARY_DIR}/include)
+set(HIREDIS_ROOT "${hiredis_SOURCE_DIR}")
+set(HIREDIS_HEADER "${hiredis_SOURCE_DIR}/hiredis.h")
+set(HIREDIS_LIB "${hiredis_BINARY_DIR}/hiredis.lib")
+
+# redis-plus-plus
+set(REDIS_PLUS_PLUS_BUILD_TEST OFF)
+set(REDIS_PLUS_PLUS_BUILD_SHARED OFF CACHE BOOL "" FORCE)
+set(REDIS_PLUS_PLUS_BUILD_STATIC ON CACHE BOOL "" FORCE)
+FetchContent_Declare(
+  redis-plus-plus
+  GIT_REPOSITORY https://github.com/sewenew/redis-plus-plus.git
+  GIT_TAG 1.3.11
+)
+FetchContent_MakeAvailable(redis-plus-plus)
 
 include_directories(include)
 
@@ -38,6 +72,15 @@ set(SOURCES
 add_executable(optimizer_service ${SOURCES})
 
 target_include_directories(optimizer_service PRIVATE include)
+target_include_directories(optimizer_service PRIVATE ${redis-plus-plus_SOURCE_DIR}/src)
+target_include_directories(optimizer_service PRIVATE ${redis-plus-plus_SOURCE_DIR}/src/sw/redis++/cxx17)
+target_include_directories(optimizer_service PRIVATE ${redis-plus-plus_SOURCE_DIR}/src/sw/redis++/no_tls)
 
 target_link_libraries(optimizer_service PRIVATE nlohmann_json::nlohmann_json)
+target_link_libraries(optimizer_service PRIVATE hiredis)
+target_link_libraries(optimizer_service PRIVATE redis++::redis++_static)
 
+# windows socket library for redis connections
+if(WIN32)
+    target_link_libraries(optimizer_service PRIVATE ws2_32)
+endif()

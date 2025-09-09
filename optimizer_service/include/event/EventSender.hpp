@@ -21,20 +21,24 @@ private:
     void writeToFile(const RawProgressData& message, const std::string& filename);
 };
 
-class RabbitMQEventSender : public EventSender {
+class RedisEventSender : public EventSender {
 public:
-    explicit RabbitMQEventSender(const std::string& connectionString, const std::string& queueName = "optimizer_progress");
-    ~RabbitMQEventSender();
+    explicit RedisEventSender(const std::string& connectionString,
+                             const std::string& progressKeyPrefix = "optimizer:progress:",
+                             const std::string& progressChannel = "optimizer:progress:updates");
+    ~RedisEventSender();
     
     void sendProgress(const RawProgressData& progress) override;
     
 private:
     std::string connectionString_;
-    std::string queueName_;
-    void* connection_;  // AMQP connection (forward declaration to avoid header dependency)
-    void* channel_; // AMQP channel
+    std::string progressKeyPrefix_;
+    std::string progressChannel_;
+    void* redisConnection_;  // Redis connection (forward declaration)
+    std::string host_;
+    std::string port_;
     
     void connect();
     void disconnect();
-    void sendMessage(const RawProgressData& message);
+    void parseConnectionString();
 };

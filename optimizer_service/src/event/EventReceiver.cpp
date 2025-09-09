@@ -4,6 +4,9 @@
 #include <fstream>
 #include <filesystem>
 #include <nlohmann/json.hpp>
+#include <sw/redis++/redis++.h>
+#include <thread>
+#include <chrono>
 
 using json = nlohmann::json;
 
@@ -73,192 +76,146 @@ bool FileEventReceiver::hasMoreJobs() {
 
 
 
-// ------------------------ RabbitMQ Event Receiver ------------------------
+// ------------------------ Redis Event Receiver ------------------------
 
-
-
-
-RabbitMQEventReceiver::RabbitMQEventReceiver(const std::string& connectionString,
-                                           const std::string& jobQueue,
-                                           const std::string& controlQueue)
-    : connectionString_(connectionString), jobQueue_(jobQueue), controlQueue_(controlQueue),
-      connection_(nullptr), channel_(nullptr), cancelRequested_(false) {
+RedisEventReceiver::RedisEventReceiver(const std::string& connectionString,
+                                     const std::string& jobQueue,
+                                     const std::string& cancelKeyPrefix)
+    : connectionString_(connectionString), jobQueue_(jobQueue), cancelKeyPrefix_(cancelKeyPrefix),
+      redisConnection_(nullptr), cancelRequested_(false) {
+    parseConnectionString();
     connect();
 }
 
-RabbitMQEventReceiver::~RabbitMQEventReceiver() {
+RedisEventReceiver::~RedisEventReceiver() {
     disconnect();
 }
 
-RawJobData RabbitMQEventReceiver::receive() {
-    Logger::info("Starting to receive job data from RabbitMQ: " + connectionString_);
-    
-    if (!connection_) {
-        throw std::runtime_error("RabbitMQ connection not established");
+void RedisEventReceiver::parseConnectionString() {
+    // Parse connection string: "redis://host:port" or "host:port"
+    std::string connStr = connectionString_;
+    if (connStr.find("redis://") == 0) {
+        connStr = connStr.substr(8); // Remove "redis://"
     }
     
-    // TODO: Implement RabbitMQ job receiving when rabbitmq-c library is available
-    /*
-    // Future implementation will:
-    // 1. Set up consumer on jobQueue_
-    // 2. Wait for message
-    // 3. Parse JSON message
-    // 4. Extract job_id, problem_data, max_execution_time
-    // 5. Return JobData
-    
-    amqp_rpc_reply_t res;
-    amqp_envelope_t envelope;
-    
-    // Set up consumer
-    amqp_basic_consume(static_cast<amqp_connection_state_t>(connection_), 1,
-                      amqp_cstring_bytes(jobQueue_.c_str()),
-                      amqp_empty_bytes, 0, 1, 0, amqp_empty_table);
-    res = amqp_get_rpc_reply(static_cast<amqp_connection_state_t>(connection_));
-    if (res.reply_type != AMQP_RESPONSE_NORMAL) {
-        throw std::runtime_error("Failed to set up consumer");
+    size_t colonPos = connStr.find(':');
+    if (colonPos != std::string::npos) {
+        host_ = connStr.substr(0, colonPos);
+        port_ = connStr.substr(colonPos + 1);
+    } else {
+        host_ = connStr.empty() ? "localhost" : connStr;
+        port_ = "6379";
     }
     
-    // Wait for message
-    amqp_maybe_release_buffers(static_cast<amqp_connection_state_t>(connection_));
-    res = amqp_consume_message(static_cast<amqp_connection_state_t>(connection_), &envelope, NULL, 0);
-    
-    if (res.reply_type != AMQP_RESPONSE_NORMAL) {
-        throw std::runtime_error("Failed to consume message");
+    if (host_.empty()) {
+        host_ = "localhost";
     }
-    
-    // Parse message
-    std::string messageBody((char*)envelope.message.body.bytes, envelope.message.body.len);
-    json messageJson = json::parse(messageBody);
-    
-    std::string job_id = messageJson["job_id"];
-    json problem_data = messageJson["problem_data"];
-    int max_execution_time = messageJson.value("max_execution_time", 300);
-    
-    currentJobId_ = job_id;
-    cancelRequested_ = false;
-    
-    RawProblemData rawData = JsonParser::toRawProblemData(problem_data);
-    
-    amqp_destroy_envelope(&envelope);
-    
-    return RawJobData(job_id, rawData, max_execution_time);
-    */
-    
-    // Placeholder implementation
-    throw std::runtime_error("RabbitMQ job receiver not implemented yet");
 }
 
-bool RabbitMQEventReceiver::checkForCancellation() {
+void RedisEventReceiver::connect() {
+    Logger::info("Connecting to Redis for receiving: " + connectionString_);
+    Logger::info("Redis host: " + host_ + ", port: " + port_);
+    
+    try {
+        // Create Redis connection using redis-plus-plus
+        sw::redis::ConnectionOptions connection_options;
+        connection_options.host = host_;
+        connection_options.port = std::stoi(port_);
+        connection_options.socket_timeout = std::chrono::milliseconds(1000);
+        
+        auto* redis = new sw::redis::Redis(connection_options);
+        redisConnection_ = redis;
+        
+        // Test connection
+        redis->ping();
+        
+        Logger::info("Successfully connected to Redis");
+    } catch (const std::exception& e) {
+        throw std::runtime_error("Failed to connect to Redis: " + std::string(e.what()));
+    }
+}
+
+void RedisEventReceiver::disconnect() {
+    if (redisConnection_) {
+        Logger::info("Disconnecting from Redis receiver");
+        delete static_cast<sw::redis::Redis*>(redisConnection_);
+        redisConnection_ = nullptr;
+    }
+}
+
+RawJobData RedisEventReceiver::receive() {
+    Logger::info("Waiting for job data from Redis queue: " + jobQueue_);
+    
+    if (!redisConnection_) {
+        throw std::runtime_error("Redis connection not established");
+    }
+    
+    auto* redis = static_cast<sw::redis::Redis*>(redisConnection_);
+    
+    try {
+        // Use BRPOP to block and wait for a job (timeout: 0 = wait indefinitely)
+        auto result = redis->brpop(jobQueue_, std::chrono::seconds(0));
+        
+        if (!result) {
+            throw std::runtime_error("BRPOP returned null result");
+        }
+        
+        std::string messageBody = result->second;
+        Logger::info("Received job message from Redis: " + messageBody.substr(0, 200) + "...");
+        
+        // Parse JSON message
+        json j = json::parse(messageBody);
+        RawJobData jobData = JsonParser::toRawJobData(j);
+        currentJobId_ = jobData.job_id;
+        
+        Logger::info("Successfully received job: " + jobData.job_id);
+        return jobData;
+        
+    } catch (const std::exception& e) {
+        throw std::runtime_error("Redis BRPOP failed: " + std::string(e.what()));
+    }
+}
+
+bool RedisEventReceiver::checkForCancellation() {
     if (cancelRequested_.load()) {
         Logger::info("Cancellation requested for job: " + currentJobId_);
         return true;
     }
     
-    // TODO: Check for control messages non-blockingly
-    /*
-    // Future implementation will check control queue for cancel messages
-    amqp_envelope_t envelope;
-    amqp_rpc_reply_t res;
-    
-    // Try to consume message with timeout (non-blocking)
-    struct timeval timeout = {0, 100000}; // 100ms timeout
-    res = amqp_consume_message(static_cast<amqp_connection_state_t>(connection_), &envelope, &timeout, 0);
-    
-    if (res.reply_type == AMQP_RESPONSE_NORMAL) {
-        std::string messageBody((char*)envelope.message.body.bytes, envelope.message.body.len);
-        json controlJson = json::parse(messageBody);
-        
-        RawControlData controlMsg = JsonParser::toRawControlData(controlJson);
-        
-        handleControlMessage(controlMsg);
-        
-        amqp_destroy_envelope(&envelope);
-    }
-    */
-    
-    return cancelRequested_.load();
+    return checkCancelFlag();
 }
 
-std::string RabbitMQEventReceiver::getCurrentJobId() const {
+bool RedisEventReceiver::checkCancelFlag() {
+    if (!redisConnection_ || currentJobId_.empty()) {
+        return false;
+    }
+    
+    auto* redis = static_cast<sw::redis::Redis*>(redisConnection_);
+    std::string cancelKey = cancelKeyPrefix_ + currentJobId_;
+    
+    try {
+        auto result = redis->get(cancelKey);
+        if (result) {
+            std::string value = *result;
+            if (value == "true" || value == "1") {
+                Logger::warn("Cancel flag found for job: " + currentJobId_);
+                cancelRequested_.store(true);
+                return true;
+            }
+        }
+    } catch (const std::exception& e) {
+        Logger::error("Failed to check cancel flag: " + std::string(e.what()));
+    }
+    
+    return false;
+}
+
+std::string RedisEventReceiver::getCurrentJobId() const {
     return currentJobId_;
 }
 
-bool RabbitMQEventReceiver::hasMoreJobs() {
-    // For RabbitMQ, we always assume there might be more jobs
-    // This will cause the service to keep running and waiting
+bool RedisEventReceiver::hasMoreJobs() {
+    // For Redis, we always assume there might be more jobs
+    // The actual waiting happens in receive()
     return true;
-}
-
-void RabbitMQEventReceiver::connect() {
-    Logger::info("Connecting to RabbitMQ for receiving: " + connectionString_);
-    
-    // TODO: Implement RabbitMQ connection when rabbitmq-c library is available
-    /*
-    connection_ = amqp_new_connection();
-    amqp_socket_t *socket = amqp_tcp_socket_new(static_cast<amqp_connection_state_t>(connection_));
-    
-    if (!socket) {
-        throw std::runtime_error("Failed to create TCP socket for RabbitMQ");
-    }
-    
-    // Parse connection string and connect
-    // Format: amqp://username:password@host:port/vhost
-    int status = amqp_socket_open(socket, host.c_str(), port);
-    if (status) {
-        throw std::runtime_error("Failed to open TCP socket to RabbitMQ");
-    }
-    
-    amqp_rpc_reply_t r = amqp_login(static_cast<amqp_connection_state_t>(connection_),
-                                   vhost.c_str(), 0, 131072, 0, AMQP_SASL_METHOD_PLAIN,
-                                   username.c_str(), password.c_str());
-    if (r.reply_type != AMQP_RESPONSE_NORMAL) {
-        throw std::runtime_error("Failed to login to RabbitMQ");
-    }
-    
-    amqp_channel_open(static_cast<amqp_connection_state_t>(connection_), 1);
-    r = amqp_get_rpc_reply(static_cast<amqp_connection_state_t>(connection_));
-    if (r.reply_type != AMQP_RESPONSE_NORMAL) {
-        throw std::runtime_error("Failed to open RabbitMQ channel");
-    }
-    
-    // Declare queues
-    amqp_queue_declare(static_cast<amqp_connection_state_t>(connection_), 1,
-                      amqp_cstring_bytes(jobQueue_.c_str()),
-                      0, 1, 0, 0, amqp_empty_table);
-    amqp_queue_declare(static_cast<amqp_connection_state_t>(connection_), 1,
-                      amqp_cstring_bytes(controlQueue_.c_str()),
-                      0, 1, 0, 0, amqp_empty_table);
-    */
-    
-    Logger::warn("RabbitMQ receiver connection not implemented yet - using placeholder");
-}
-
-void RabbitMQEventReceiver::disconnect() {
-    if (connection_) {
-        Logger::info("Disconnecting from RabbitMQ receiver");
-        
-        // TODO: Implement proper disconnection
-        /*
-        amqp_channel_close(static_cast<amqp_connection_state_t>(connection_), 1, AMQP_REPLY_SUCCESS);
-        amqp_connection_close(static_cast<amqp_connection_state_t>(connection_), AMQP_REPLY_SUCCESS);
-        amqp_destroy_connection(static_cast<amqp_connection_state_t>(connection_));
-        */
-        
-        connection_ = nullptr;
-        channel_ = nullptr;
-    }
-}
-
-void RabbitMQEventReceiver::setupControlMessageListener() {
-    // TODO: Set up background listener for control messages
-    Logger::info("Setting up control message listener for queue: " + controlQueue_);
-}
-
-void RabbitMQEventReceiver::handleControlMessage(const RawControlData& message) {
-    Logger::info("Received control message: " + message.action + " for job: " + message.job_id);
-    
-    if (message.action == "cancel" && message.job_id == currentJobId_) {
-        Logger::warn("Cancel requested for current job: " + currentJobId_);
-        cancelRequested_.store(true);
-    }
 }

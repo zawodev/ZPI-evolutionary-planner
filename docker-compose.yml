@@ -16,7 +16,7 @@ services:
       - "6379:6379"
 
   backend:
-    build: .
+    build: ./backend
     ports:
       - "8000:8000"
     environment:
@@ -30,7 +30,7 @@ services:
         condition: service_started
 
   progress-listener:
-    build: .
+    build: ./backend
     environment:
       - USE_REDIS=True
       - REDIS_HOST=redis
