@@ -7,6 +7,7 @@
 #include <ctime>
 #include <filesystem>
 #include <sstream>
+#include <sw/redis++/redis++.h>
 
 using json = nlohmann::json;
 
@@ -56,123 +57,101 @@ void FileEventSender::writeToFile(const RawProgressData& message, const std::str
 }
 
 
-// ------------------------ RabbitMQ Event Sender ------------------------
+// ------------------------ Redis Event Sender ------------------------
 
-
-RabbitMQEventSender::RabbitMQEventSender(const std::string& connectionString, const std::string& queueName)
-    : connectionString_(connectionString), queueName_(queueName), connection_(nullptr), channel_(nullptr) {
-    Logger::info("RabbitMQEventSender initialized with queue: " + queueName_);
+RedisEventSender::RedisEventSender(const std::string& connectionString,
+                                 const std::string& progressKeyPrefix,
+                                 const std::string& progressChannel)
+    : connectionString_(connectionString), progressKeyPrefix_(progressKeyPrefix), 
+      progressChannel_(progressChannel), redisConnection_(nullptr) {
+    Logger::info("RedisEventSender initialized with prefix: " + progressKeyPrefix_ + 
+                ", channel: " + progressChannel_);
+    parseConnectionString();
     connect();
 }
 
-RabbitMQEventSender::~RabbitMQEventSender() {
+RedisEventSender::~RedisEventSender() {
     disconnect();
 }
 
-void RabbitMQEventSender::sendProgress(const RawProgressData& progress) {
-    Logger::info("Sending progress to RabbitMQ for job " + progress.job_id + 
-                ", iteration " + std::to_string(progress.iteration));
-    sendMessage(progress);
-}
-
-void RabbitMQEventSender::connect() {
-    Logger::info("Connecting to RabbitMQ for sending: " + connectionString_);
-    
-    // TODO: Implement RabbitMQ connection when rabbitmq-c library is available
-    // This is a placeholder implementation
-    
-    /*
-    // Future implementation with rabbitmq-c:
-    connection_ = amqp_new_connection();
-    amqp_socket_t *socket = amqp_tcp_socket_new(static_cast<amqp_connection_state_t>(connection_));
-    
-    if (!socket) {
-        throw std::runtime_error("Failed to create TCP socket for RabbitMQ");
+void RedisEventSender::parseConnectionString() {
+    // parse connection string: "redis://host:port" or "host:port"
+    std::string connStr = connectionString_;
+    if (connStr.find("redis://") == 0) {
+        connStr = connStr.substr(8); // remove "redis://"
     }
     
-    // Parse connection string and connect
-    // Format: amqp://username:password@host:port/vhost
-    int status = amqp_socket_open(socket, host.c_str(), port);
-    if (status) {
-        throw std::runtime_error("Failed to open TCP socket to RabbitMQ");
+    size_t colonPos = connStr.find(':');
+    if (colonPos != std::string::npos) {
+        host_ = connStr.substr(0, colonPos);
+        port_ = connStr.substr(colonPos + 1);
+    } else {
+        host_ = connStr.empty() ? "localhost" : connStr;
+        port_ = "6379";
     }
     
-    amqp_rpc_reply_t r = amqp_login(static_cast<amqp_connection_state_t>(connection_),
-                                   vhost.c_str(), 0, 131072, 0, AMQP_SASL_METHOD_PLAIN,
-                                   username.c_str(), password.c_str());
-    if (r.reply_type != AMQP_RESPONSE_NORMAL) {
-        throw std::runtime_error("Failed to login to RabbitMQ");
-    }
-    
-    amqp_channel_open(static_cast<amqp_connection_state_t>(connection_), 1);
-    r = amqp_get_rpc_reply(static_cast<amqp_connection_state_t>(connection_));
-    if (r.reply_type != AMQP_RESPONSE_NORMAL) {
-        throw std::runtime_error("Failed to open RabbitMQ channel");
-    }
-    */
-    
-    Logger::warn("RabbitMQ sender connection not implemented yet - using placeholder");
-}
-
-void RabbitMQEventSender::disconnect() {
-    if (connection_) {
-        Logger::info("Disconnecting from RabbitMQ sender");
-        
-        // TODO: Implement proper disconnection
-        /*
-        amqp_channel_close(static_cast<amqp_connection_state_t>(connection_), 1, AMQP_REPLY_SUCCESS);
-        amqp_connection_close(static_cast<amqp_connection_state_t>(connection_), AMQP_REPLY_SUCCESS);
-        amqp_destroy_connection(static_cast<amqp_connection_state_t>(connection_));
-        */
-        
-        connection_ = nullptr;
-        channel_ = nullptr;
+    if (host_.empty()) {
+        host_ = "localhost";
     }
 }
 
-void RabbitMQEventSender::sendMessage(const RawProgressData& message) {
+void RedisEventSender::connect() {
+    Logger::info("Connecting to Redis for sending: " + connectionString_);
+    Logger::info("Redis host: " + host_ + ", port: " + port_);
+    
     try {
-        if (!connection_) {
-            throw std::runtime_error("RabbitMQ connection not established");
-        }
+        // create Redis connection using redis-plus-plus
+        sw::redis::ConnectionOptions connection_options;
+        connection_options.host = host_;
+        connection_options.port = std::stoi(port_);
+        connection_options.socket_timeout = std::chrono::milliseconds(1000);
         
-        json messageJson = JsonParser::toJson(message);
-        std::string messageBody = messageJson.dump();
+        auto* redis = new sw::redis::Redis(connection_options);
+        redisConnection_ = redis;
         
-        Logger::info("Preparing to send message to queue: " + queueName_);
-        Logger::debug("Message body: " + messageBody);
+        // test connection
+        redis->ping();
         
-        // TODO: Implement actual message sending when rabbitmq-c is available
-        /*
-        amqp_basic_properties_t props;
-        props._flags = AMQP_BASIC_CONTENT_TYPE_FLAG | AMQP_BASIC_DELIVERY_MODE_FLAG;
-        props.content_type = amqp_cstring_bytes("application/json");
-        props.delivery_mode = 2; // persistent
-        
-        amqp_bytes_t message_bytes;
-        message_bytes.len = messageBody.length();
-        message_bytes.bytes = const_cast<char*>(messageBody.c_str());
-        
-        int result = amqp_basic_publish(
-            static_cast<amqp_connection_state_t>(connection_),
-            1,
-            amqp_cstring_bytes(""),  // exchange
-            amqp_cstring_bytes(queueName_.c_str()),  // routing key
-            0,  // mandatory
-            0,  // immediate
-            &props,
-            message_bytes
-        );
-        
-        if (result < 0) {
-            throw std::runtime_error("Failed to publish message to RabbitMQ");
-        }
-        */
-        
-        Logger::warn("RabbitMQ message sending not implemented yet - message would be: " + messageBody);
-        
+        Logger::info("Successfully connected to Redis");
     } catch (const std::exception& e) {
-        Logger::error("Failed to send message to RabbitMQ: " + std::string(e.what()));
-        throw;
+        throw std::runtime_error("Failed to connect to Redis: " + std::string(e.what()));
+    }
+}
+
+void RedisEventSender::disconnect() {
+    if (redisConnection_) {
+        Logger::info("Disconnecting from Redis sender");
+        delete static_cast<sw::redis::Redis*>(redisConnection_);
+        redisConnection_ = nullptr;
+    }
+}
+
+void RedisEventSender::sendProgress(const RawProgressData& progress) {
+    Logger::info("Sending progress to Redis for job " + progress.job_id + 
+                ", iteration " + std::to_string(progress.iteration));
+    
+    if (!redisConnection_) {
+        throw std::runtime_error("Redis connection not established");
+    }
+    
+    auto* redis = static_cast<sw::redis::Redis*>(redisConnection_);
+    
+    try {
+        // convert progress to JSON
+        json progressJson = JsonParser::toJson(progress);
+        std::string messageBody = progressJson.dump();
+        
+        // store progress in redis key (optimizer:progress:{id})
+        std::string progressKey = progressKeyPrefix_ + progress.job_id;
+        redis->set(progressKey, messageBody);
+        
+        // publish progress update notification (optimizer:progress:updates)
+        auto subscribers = redis->publish(progressChannel_, messageBody);
+        
+        Logger::info("Successfully sent progress for job: " + progress.job_id + 
+                    " (notified " + std::to_string(subscribers) + " subscribers)");
+                    
+    } catch (const std::exception& e) {
+        throw std::runtime_error("Redis operation failed: " + std::string(e.what()));
     }
 }

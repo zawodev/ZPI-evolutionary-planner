@@ -9,7 +9,7 @@ logger = get_logger(__name__)
 
 # this background task needs to be run alongside the Django server
 class Command(BaseCommand):
-    help = 'Listen for progress updates from the optimizer service'
+    help = 'Listen for progress updates from the optimizer service via Redis Pub/Sub'
     
     def __init__(self):
         super().__init__()
@@ -34,12 +34,18 @@ class Command(BaseCommand):
         signal.signal(signal.SIGTERM, self.signal_handler)
         
         self.stdout.write(
-            self.style.SUCCESS('Starting optimizer progress listener...')
+            self.style.SUCCESS('Starting Redis progress listener...')
         )
         
         try:
             self.listener = ProgressListener()
             self.listener.start_listening()
+            
+            # Keep the main thread alive while the listener runs in background
+            while self.running:
+                import time
+                time.sleep(1)
+                
         except KeyboardInterrupt:
             self.stdout.write(
                 self.style.WARNING('Received interrupt signal, shutting down...')
@@ -50,8 +56,8 @@ class Command(BaseCommand):
             )
             logger.exception("Progress listener error")
         finally:
-            if self.listener and self.listener.rabbitmq:
-                self.listener.rabbitmq.close()
+            if self.listener:
+                self.listener.stop_listening()
                 self.stdout.write(
                     self.style.SUCCESS('Progress listener stopped.')
                 )
@@ -62,6 +68,6 @@ class Command(BaseCommand):
             self.style.WARNING(f'Received signal {sig}, shutting down...')
         )
         self.running = False
-        if self.listener and self.listener.rabbitmq:
-            self.listener.rabbitmq.channel.stop_consuming()
+        if self.listener:
+            self.listener.stop_listening()
         sys.exit(0)

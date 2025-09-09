@@ -1,13 +1,20 @@
 # Dokumentacja Optimizer Service (nieformalna, niekompletna)
 
-## Wprowadzenie
-Ten dokument opisuje strukturę plików wejściowych (input.json) i wyjściowych (output.json) używanych w systemie optymalizacji planu zajęć - później będą to serializowane requesty wysyłane przez API/broker w tej samiej formie json. System używa algorytmu ewolucyjnego do przypisywania grup zajęć studentom, a nauczycielom, sal i timeslotow, biorąc pod uwagę ograniczenia i preferencje. Dane są przetwarzane przez klasę `Evaluator`, która oblicza fitness (ocenę jakości) rozwiązania.
+### Wprowadzenie:
 
-## Struktura Input (input.json)
+Ten dokument opisuje system optymalizacji planu zajęć. System używa algorytmu ewolucyjnego do przypisywania grup zajęć studentom, a nauczycielom sal i timeslotow, biorąc pod uwagę ograniczenia i preferencje. Dane są przetwarzane przez klasę `Evaluator`, która oblicza fitness (ocenę jakości) rozwiązania.
+
+### Spis treści:
+1) pliki wejściowe (input.json) i wyjściowe (output.json)
+2) message format kolejek RabbitMQ
+
+## 1) Pliki wejściowe i wyjściowe (FileEvent)
+
+### Struktura Input (input.json)
 
 plik wejściowy definiuje problem: ograniczenia (constraints) i preferencje (preferences)- wszystko w formacie json (później również takie rzeczy jak czas wykonania czy algorytm pewnie też bo to będzie request)
 
-### Constraints (Ograniczenia)
+#### Constraints (Ograniczenia)
 definiują twarde reguły problemu, które muszą być spełnione (albo problem unsolvable)
 
 - `timeslots_per_day`: Lista liczb, np. `[7, 7, 7, 7, 7, 0, 0]`. Określa liczbę slotów czasowych na każdy dzień tygodnia (7 dni dlatego rozmiar tablicy to 7). Slot to np. godzina lekcyjna. Dni bez zajęć mają 0. Kolejne godziny tego samego dnia są oznaczane jako brak okienka
@@ -22,7 +29,7 @@ definiują twarde reguły problemu, które muszą być spełnione (albo problem 
 
 - `rooms_unavailability_timeslots`: Lista list, np. `[[12, 13], [], [5, 6, 7]]`. Dla każdej sali (room, indeks od 0) lista slotów czasowych, kiedy sala jest niedostępna (np. wynajem lub inne tego typu sytuacje)
 
-### Preferences (Preferencje)
+#### Preferences (Preferencje)
 definiują miękkie preferencje, które wpływają na końcowy fitness. Każda preferencja ma wagę (weight), która mówi, jak istotna jest względnie dla danej osoby
 
 - `students`: Lista dla każdego studenta.
@@ -42,7 +49,7 @@ definiują miękkie preferencje, które wpływają na końcowy fitness. Każda p
   - `group_max_overflow`: Obiekt z `value` (maksymalny nadmiar studentów w grupie, np. 5) i `weight` (waga).
   - ((not implemented)Jeśli możliwe program priorytetyzuje puste grupy (niezapełnione studentami) bo wtedy można ich nie uruchamiać wcale)
 
-## Struktura Output (output.json)
+### Struktura Output (output.json)
 
 plik wyjściowy to wynik optymalizacji: najlepsze znalezione rozwiązanie
 
@@ -57,8 +64,65 @@ plik wyjściowy to wynik optymalizacji: najlepsze znalezione rozwiązanie
 - `teacher_fitnesses`: Lista, np. `[0.642857, 0.777777, 1.0]`. fitness dla każdego nauczyciela.
 - `management_fitness`: Liczba, np. `0.444444`. fitness dla preferencji zarządu.
 
-## Jak Liczone Jest Wyjście
+### Jak Liczone Jest Wyjście
 - Dekodowanie genotypu: W `Evaluator::evaluate()` genotyp jest dzielony na dwie części: student-grupy (relatywne indeksy zamieniane na absolutne) i grupa-slot/sala.
 - Ocena fitness: Dla każdej grupy (student, teacher, management) liczy się, ile preferencji jest spełnionych (z wagami). Wynik to suma wag spełnionych / suma wag (dla pojedynczego studenta/teachera). Całkowity fitness to średnia ważona z tych trzech (120 studentów + 10 prowadzących + 1 management). (na razie dla uproszczenia dzielę przez 3)
 - `Repair`: Jeśli rozwiązanie łamie ograniczenia (np. zbyt wielu studentów w grupie), `Evaluator::repair()` naprawia to deterministycznie przesuwając studentów do innych grup.
 - Przykładowo fitness 0.75 oznacza, że 75% preferencji jest spełnionych.
+
+
+
+
+
+
+## 2) RabbitMQ integration for C++ Optimizer (RabbitMQEvent) - Specyfikacja 
+
+### Kolejki
+
+#### Input Queue - optimizer otrzymuje:
+- Queue: `optimizer_jobs`
+- Message Format:
+```json
+{
+  "job_id": "uuid-string",
+  "problem_data": {
+    "constraints": {...},
+    "preferences": {...}
+  },
+  "max_execution_time": 300
+}
+```
+
+#### Progress Queue - optimizer wysyła:
+- Queue: `optimizer_progress` 
+- Message Format:
+```json
+{
+  "job_id": "uuid-string",
+  "iteration": 150,
+  "best_solution": {
+    "genotype": [2,1,0,0,2,0,3,0,1,2,16,2,14,2,8,0,8,1,13,2,2,1,1,0,5,0,12,1,19,0,32,2,30,2,17,1,3,1],
+    "fitness": 0.750441,
+    "by_student": [[2,1,0],[0,2,0,3],[0,1,2]],
+    "by_group": [[16,2],[14,2],[8,0],[8,1],[13,2],[2,1],[1,0],[5,0],[12,1],[19,0],[32,2],[30,2],[17,1],[3,1]],
+    "student_fitnesses": [1.0,1.0,1.0],
+    "teacher_fitnesses": [0.6428571428571429,0.7777777777777778,1.0],
+    "management_fitness": 0.444444
+  }
+}
+```
+
+#### Control Queue - optimizer otrzymuje:
+- Queue: `optimizer_control`
+- Message Format:
+```json
+{
+  "action": "cancel",
+  "job_id": "uuid-string"
+}
+```
+
+### W skrócie:
+
+RabbitMQEventReceiver - odbiera z optimizer_jobs i optimizer_control
+RabbitMQEventSender - wysyła do optimizer_progress

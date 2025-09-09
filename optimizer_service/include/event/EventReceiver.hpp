@@ -33,12 +33,12 @@ private:
     void loadJobFiles();
 };
 
-class RabbitMQEventReceiver : public EventReceiver {
+class RedisEventReceiver : public EventReceiver {
 public:
-    explicit RabbitMQEventReceiver(const std::string& connectionString, 
-                                   const std::string& jobQueue = "optimizer_jobs",
-                                   const std::string& controlQueue = "optimizer_control");
-    ~RabbitMQEventReceiver();
+    explicit RedisEventReceiver(const std::string& connectionString, 
+                                const std::string& jobQueue = "optimizer:jobs",
+                                const std::string& cancelKeyPrefix = "optimizer:cancel:");
+    ~RedisEventReceiver();
     
     RawJobData receive() override;
     bool checkForCancellation() override;
@@ -48,14 +48,15 @@ public:
 private:
     std::string connectionString_;
     std::string jobQueue_;
-    std::string controlQueue_;
-    void* connection_;  // AMQP connection (forward declaration)
-    void* channel_; // AMQP channel
+    std::string cancelKeyPrefix_;
+    void* redisConnection_;
     std::atomic<bool> cancelRequested_;
     std::string currentJobId_;
+    std::string host_;
+    std::string port_;
     
     void connect();
     void disconnect();
-    void setupControlMessageListener();
-    void handleControlMessage(const RawControlData& message);
+    bool checkCancelFlag();
+    void parseConnectionString();
 };
