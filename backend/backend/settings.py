@@ -90,7 +90,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': BASE_DIR / 'data' / 'db.sqlite3',
     }
 }
 
@@ -167,7 +167,7 @@ CORS_ALLOW_CREDENTIALS = True
 # Channels configuration
 ASGI_APPLICATION = 'backend.asgi.application'
 
-# Redis configuration
+# Redis configuration for communication with optimizer
 USE_REDIS = os.getenv('USE_REDIS', 'True').lower() == 'true'
 REDIS_HOST = os.getenv('REDIS_HOST', '127.0.0.1')
 REDIS_PORT = int(os.getenv('REDIS_PORT', '6379'))
@@ -199,15 +199,3 @@ else:
             'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
         }
     }
-
-# RabbitMQ configuration
-RABBITMQ_HOST = os.getenv('RABBITMQ_HOST', 'localhost')
-RABBITMQ_PORT = int(os.getenv('RABBITMQ_PORT', '5672'))
-RABBITMQ_USERNAME = os.getenv('RABBITMQ_USERNAME', 'guest')
-RABBITMQ_PASSWORD = os.getenv('RABBITMQ_PASSWORD', 'guest')
-RABBITMQ_VHOST = os.getenv('RABBITMQ_VHOST', '/')
-
-# RabbitMQ queue names
-OPTIMIZER_QUEUE = os.getenv('OPTIMIZER_QUEUE', 'optimizer_jobs')
-PROGRESS_QUEUE = os.getenv('PROGRESS_QUEUE', 'optimizer_progress')
-CONTROL_QUEUE = os.getenv('CONTROL_QUEUE', 'optimizer_control')

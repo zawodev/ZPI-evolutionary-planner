@@ -7,7 +7,6 @@ class ProblemDataSerializer(serializers.Serializer):
     """Serializer for ProblemData structure"""
     constraints = serializers.DictField()
     preferences = serializers.DictField()
-    max_execution_time = serializers.IntegerField(min_value=10, max_value=3600)
     
     def validate_constraints(self, value):
         """Validate constraints structure"""
@@ -36,6 +35,7 @@ class ProblemDataSerializer(serializers.Serializer):
 class OptimizationJobCreateSerializer(serializers.Serializer):
     """Serializer for creating optimization jobs"""
     problem_data = ProblemDataSerializer()
+    max_execution_time = serializers.IntegerField(min_value=10, max_value=3600)
     
     def create(self, validated_data):
         """Create a new optimization job"""
@@ -43,7 +43,7 @@ class OptimizationJobCreateSerializer(serializers.Serializer):
         
         job = OptimizationJob.objects.create(
             problem_data=validated_data['problem_data'],
-            max_execution_time=validated_data['problem_data']['max_execution_time'],
+            max_execution_time=validated_data['max_execution_time'],
             user=self.context['request'].user if self.context['request'].user.is_authenticated else None
         )
         return job

@@ -65,7 +65,7 @@ class OptimizationJobListCreateView(generics.ListCreateAPIView):
         try:
             # use the service to submit the job
             optimizer_service = OptimizerService()
-            job = optimizer_service.submit_job(serializer.validated_data['problem_data'])
+            job = optimizer_service.submit_job(serializer.validated_data)
             
             # return the created job
             job_serializer = OptimizationJobSerializer(job)
@@ -212,17 +212,17 @@ def health_check(request):
         # check database connectivity
         OptimizationJob.objects.exists()
         
-        # check RabbitMQ connectivity
-        from .services import RabbitMQService
-        rabbitmq = RabbitMQService()
-        rabbitmq.close()
+        # check Redis connectivity
+        from .services import RedisService
+        redis_service = RedisService()
+        redis_service.redis_client.ping()
         
         return Response({
             'status': 'healthy',
             'timestamp': timezone.now().isoformat(),
             'services': {
                 'database': 'ok',
-                'rabbitmq': 'ok'
+                'redis': 'ok'
             }
         })
         

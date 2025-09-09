@@ -1,19 +1,9 @@
 services:
-  rabbitmq:
-    image: rabbitmq:3-management
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
+    command: redis-server --timeout 0
 
   backend:
     build: ./backend
@@ -22,22 +12,26 @@ services:
     environment:
       - USE_REDIS=True
       - REDIS_HOST=redis
-      - RABBITMQ_HOST=rabbitmq
+      - REDIS_PORT=6379
+      - REDIS_DB=0
     depends_on:
-      rabbitmq:
-        condition: service_healthy
-      redis:
-        condition: service_started
+      - redis
+    volumes:
+      - db_data:/app/data
 
   progress-listener:
     build: ./backend
     environment:
       - USE_REDIS=True
       - REDIS_HOST=redis
-      - RABBITMQ_HOST=rabbitmq
-    command: python manage.py listen_progress
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+    command: ["python", "manage.py", "listen_progress"]
     depends_on:
-      rabbitmq:
-        condition: service_healthy
-      redis:
-        condition: service_started
+      - redis
+    volumes:
+      - db_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  db_data:

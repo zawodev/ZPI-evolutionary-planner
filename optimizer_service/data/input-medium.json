@@ -1,6 +1,6 @@
 {
   "job_id": "medium_test_job_001",
-  "max_execution_time": 600,
+  "max_execution_time": 30,
   "problem_data": {
     "constraints": {
       "timeslots_per_day": [6,5,4,4,6,0,0],

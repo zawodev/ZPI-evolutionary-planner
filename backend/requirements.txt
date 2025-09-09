@@ -8,14 +8,11 @@ drf-spectacular==0.28.0
 # cors headers
 django-cors-headers==4.7.0
 
-# broker (rabbitmq)
-pika==1.3.2
-
 # websockets
 channels==4.1.0
 channels-redis==4.2.0
 
-# caching and sessions
+# redis for communication with optimizer
 redis==5.2.1
 
 # env vars
