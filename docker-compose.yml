@@ -10,7 +10,6 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - USE_REDIS=True
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_DB=0
@@ -22,7 +21,6 @@ services:
   progress-listener:
     build: ./backend
     environment:
-      - USE_REDIS=True
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_DB=0
