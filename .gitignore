@@ -22,7 +22,7 @@
 
 # Virtualenv
 .venv/
-/venv/
+**/venv/
 /env/
 
 # Environment variables
