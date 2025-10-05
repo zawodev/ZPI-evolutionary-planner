@@ -38,6 +38,7 @@ class OptimizationJob(models.Model):
 
 
 class OptimizationProgress(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     job = models.ForeignKey(OptimizationJob, on_delete=models.CASCADE, related_name='progress_updates')
     iteration = models.IntegerField()
     timestamp = models.DateTimeField(auto_now_add=True)

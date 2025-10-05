@@ -51,7 +51,8 @@ INSTALLED_APPS = [
     
     # local apps
     'optimizer',
-    'identity'
+    'identity',
+    'scheduling',
 ]
 
 MIDDLEWARE = [
