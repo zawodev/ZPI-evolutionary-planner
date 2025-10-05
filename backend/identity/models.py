@@ -14,7 +14,7 @@ class User(AbstractUser):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='participant', null=False)
 
     class Meta:
-        db_table = 'core_users'
+        db_table = 'identity_users'
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.username})"
@@ -25,7 +25,7 @@ class Organization(models.Model):
     organization_name = models.CharField(max_length=255)
 
     class Meta:
-        db_table = 'core_organizations'
+        db_table = 'identity_organizations'
 
     def __str__(self):
         return self.organization_name
@@ -43,7 +43,7 @@ class Group(models.Model):
     )
 
     class Meta:
-        db_table = 'core_groups'
+        db_table = 'identity_groups'
 
     def __str__(self):
         return self.group_name
@@ -64,7 +64,7 @@ class UserGroup(models.Model):
     )
 
     class Meta:
-        db_table = 'core_usergroups'
+        db_table = 'identity_usergroups'
         unique_together = ('user', 'group')
 
     def __str__(self):
