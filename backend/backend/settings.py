@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     
     # local apps
     'optimizer',
+    'identity'
 ]
 
 MIDDLEWARE = [
@@ -94,7 +95,7 @@ DATABASES = {
     }
 }
 
-AUTH_USER_MODEL = "core.User"
+AUTH_USER_MODEL = "identity.User"
 
 
 # Password validation
