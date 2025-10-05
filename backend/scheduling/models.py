@@ -1,10 +1,11 @@
 from django.db import models
 from django.conf import settings
 from identity.models import User, Group
+import uuid
 
 
 class Subject(models.Model):
-    subject_id = models.AutoField(primary_key=True)
+    subject_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     subject_name = models.CharField(max_length=255)
 
     class Meta:
@@ -20,7 +21,7 @@ class Recruitment(models.Model):
         ('summer', 'Summer'),
     ]
     
-    recruitment_id = models.AutoField(primary_key=True)
+    recruitment_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     recruitment_name = models.CharField(max_length=255)
     year = models.IntegerField()
     semester = models.CharField(max_length=20, choices=SEMESTER_CHOICES)
@@ -39,7 +40,7 @@ class Plan(models.Model):
         ('archived', 'Archived'),
     ]
     
-    plan_id = models.AutoField(primary_key=True)
+    plan_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     recruitment = models.ForeignKey(
         Recruitment,
         on_delete=models.CASCADE,
@@ -66,7 +67,7 @@ class Plan(models.Model):
 
 
 class Room(models.Model):
-    room_id = models.AutoField(primary_key=True)
+    room_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     building_name = models.CharField(max_length=255)
     room_number = models.CharField(max_length=50)
     capacity = models.IntegerField()
@@ -79,7 +80,7 @@ class Room(models.Model):
 
 
 class Tag(models.Model):
-    tag_id = models.AutoField(primary_key=True)
+    tag_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     tag_name = models.CharField(max_length=100, unique=True)
 
     class Meta:
@@ -90,6 +91,7 @@ class Tag(models.Model):
 
 
 class RoomTag(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     room = models.ForeignKey(
         Room,
         on_delete=models.CASCADE,
@@ -118,7 +120,7 @@ class Meeting(models.Model):
         ('monthly', 'Monthly'),
     ]
     
-    meeting_id = models.AutoField(primary_key=True)
+    meeting_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     plan = models.ForeignKey(
         Plan,
         on_delete=models.CASCADE,

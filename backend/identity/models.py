@@ -50,6 +50,7 @@ class Group(models.Model):
 
 
 class UserGroup(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -69,3 +70,13 @@ class UserGroup(models.Model):
 
     def __str__(self):
         return f"{self.user} -> {self.group}"
+
+
+# to do:
+
+#class Constraint(models.Model):
+#    pass
+
+
+#class Preference(models.Model):
+#    pass
