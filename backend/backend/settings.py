@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     
     # local apps
     'optimizer',
+    'identity'
 ]
 
 MIDDLEWARE = [
@@ -93,6 +94,8 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+AUTH_USER_MODEL = "identity.User"
 
 
 # Password validation
