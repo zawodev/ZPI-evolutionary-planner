@@ -1,0 +1,153 @@
+.background {
+  position: absolute;
+  width: 1728px;
+  height: 1133px;
+  left: 0;
+  top: 0;
+  background: conic-gradient(
+    from -68.9deg at 74.22% 21.83%,
+    #ffffff 0deg,
+    #ffffff 22.5deg,
+    #c584bf 116.83deg,
+    #2163ff 211.15deg,
+    #ffffff 360deg
+  );
+
+}
+
+/* Header bar */
+.header {
+  position: absolute;
+  width: 1728px;
+  height: 68px;
+  left: 0;
+  top: 0;
+  background: #ffffff;
+  opacity: 1;
+}
+
+/* Blue top strip */
+.header-strip {
+  position: absolute;
+  width: 1728px;
+  height: 38px;
+  left: 0;
+  top: 70px;
+  background: #2163ff;
+}
+
+/* Login button */
+.login-btn {
+  position: absolute;
+  width: 98px;
+  height: 28px;
+  left: 1356px;
+  top: 18px;
+  background: #2163ff;
+  border-radius: 15px;
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 18px;
+  text-align: center;
+}
+
+/* Logo text */
+.logo {
+  position: absolute;
+  left: 259px;
+  top: 19px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700;
+  font-size: 22.4px;
+  line-height: 29px;
+  text-align: center;
+  color: #000;
+}
+
+/* Navigation links */
+.nav-home,
+.nav-func,
+.nav-contact {
+  background: transparent;
+  border: none !important;
+  position: absolute;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 18px;
+  text-align: center;
+  color: #000;
+}
+
+.nav-home {
+  left: 694px;
+  top: 23px;
+}
+
+.nav-func {
+  left: 771px;
+  top: 23px;
+}
+
+.nav-contact {
+  left: 914px;
+  top: 23px;
+}
+
+/* Header icon */
+.header-icon {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  left: 1003px;
+  top: 17px;
+  background: url('/image.png');
+  background-size: cover;
+}
+
+/* Hero headline */
+.hero-title {
+  position: absolute;
+  width: 747px;
+  height: 300px;
+  left: 267px;
+  top: 326px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 900;
+  font-size: 91.744px;
+  line-height: 100px;
+  letter-spacing: -0.05em;
+  color: #000;
+}
+
+/* Hero description */
+.hero-desc {
+  position: absolute;
+  width: 987px;
+  height: 282px;
+  left: 267px;
+  top: 673px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 400;
+  font-size: 35.8375px;
+  line-height: 47px;
+  letter-spacing: -0.05em;
+  color: #000;
+}
+
+/* Out now banner text */
+.out-now {
+  position: absolute;
+  width: 61px;
+  height: 18px;
+  left: calc(50% - 61px / 2 + 0.5px);
+  /*top: 79px;*/
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 18px;
+  text-align: center;
+  color: #ffffff;
+}
