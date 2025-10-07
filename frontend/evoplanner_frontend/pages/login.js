@@ -1,6 +1,8 @@
 // Login page with the form for a login. Register sends to a diffrent page
 import React, { useState } from "react";
-
+import styles from '@/styles/login.module.css';
+import Navbar from "@/components/Navbar";
+import Image from "next/image";
 export default function LoginPage() {
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
@@ -18,49 +20,60 @@ export default function LoginPage() {
 
   return (
     //main page TODO: these styles should be in styles/login
-    <div className="flex items-center justify-center h-screen">
-      <div className="bg-red-100 shadow-lg rounded-2xl p-8 w-96 text-center">
-        <div className="mb-6">
-          <img
-            src="/globe.svg"
-            alt="App Logo"
-            className="mx-auto w-20 h-20"
-          />
-        </div>
-
+    <div className={styles.background}>
+      <Navbar />
+      <div className={styles.loginframe}>
+        <strong className={styles.logo}>Rekruter+</strong>
         <form onSubmit={handleLogin} className="space-y-4">
+          <p className={styles.infotext}>Adres e-mail</p>
           <input
             type="text"
-            placeholder="Login"
+            placeholder=" imienazwisko@email.com"
             value={login}
             onChange={(e) => setLogin(e.target.value)}
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-200"
+            className={styles.logininput}
+            style={{ '--top': `${15}vh` }}
             required
           />
-
+          <p className={styles.infotext} style={{ '--top': `${19}vh` }}>Hasło</p>
           <input
             type="password"
-            placeholder="Password"
+            placeholder="*********"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-200"
+            className={styles.logininput}
+            style={{ '--top': `${23}vh` }}
             required
           />
 
           
-          <div className="space-y-2">
+          <div>
             <button
               type="submit"
-              className="w-full bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 transition"
+              className={styles.loginbutton}
+              style={{ '--top': `${30}vh` }}
             >
-              Login
+              Zaloguj
+            </button>
+            <p className={styles.infotext} style={{ '--top': `${35}vh`, '--left': `${8}vw` }}>Lub kontynuuj przez</p>
+            <button
+              type="button"
+              onClick={goToRegister}
+              className={styles.loginbutton}
+              style={{ '--top': `${40}vh` }}
+            >
+              <div className={styles.iconwrapper}>
+                <Image src="/googleicon.svg" alt="Google Logo" fill style={{ objectFit: "contain" }} />
+              </div>
+              <span>Google</span>
             </button>
             <button
               type="button"
               onClick={goToRegister}
-              className="w-full bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition"
+              className={styles.loginbutton}
+              style={{ '--top': `${45}vh` }}
             >
-              Register
+              Usos
             </button>
           </div>
         </form>

@@ -1,67 +1,55 @@
 .background {
   position: absolute;
-  width: 1728px;
-  height: 1133px;
+  width: 100vw;
+  height: 100vh;
   left: 0;
   top: 0;
-  background: conic-gradient(
-    from -68.9deg at 74.22% 21.83%,
-    #ffffff 0deg,
-    #ffffff 22.5deg,
-    #c584bf 116.83deg,
-    #2163ff 211.15deg,
-    #ffffff 360deg
-  );
+  background: conic-gradient(from -68.9deg at 74.22% 21.83%,
+      #ffffff 0deg,
+      #ffffff 22.5deg,
+      #2163ff 116.83deg, 
+      #c584bf 211.15deg,
+      #ffffff 360deg);
 
 }
 
 /* Header bar */
 .header {
   position: absolute;
-  width: 1728px;
-  height: 68px;
+  width: 100vw;
+  height: 7.5vh;
   left: 0;
   top: 0;
   background: #ffffff;
-  opacity: 1;
-}
-
-/* Blue top strip */
-.header-strip {
-  position: absolute;
-  width: 1728px;
-  height: 38px;
-  left: 0;
-  top: 70px;
-  background: #2163ff;
+  opacity: 0.7;
 }
 
 /* Login button */
 .login-btn {
   position: absolute;
-  width: 98px;
-  height: 28px;
-  left: 1356px;
-  top: 18px;
+  width: 5.67vw;
+  height: 3.09vh;
+  left: 78.47vw;
+  top: 1.99vh;
   background: #2163ff;
   border-radius: 15px;
   color: #fff;
   font-family: 'DM Sans', sans-serif;
   font-weight: 400;
-  font-size: 14px;
-  line-height: 18px;
+  font-size: 1.55vh;
+  line-height: 1.99vh;
   text-align: center;
 }
 
 /* Logo text */
 .logo {
   position: absolute;
-  left: 259px;
-  top: 19px;
+  left: 14.99vw;
+  top: 2.1vh;
   font-family: 'DM Sans', sans-serif;
   font-weight: 700;
-  font-size: 22.4px;
-  line-height: 29px;
+  font-size: 2.5vh;
+  line-height: 3.2vh;
   text-align: center;
   color: #000;
 }
@@ -75,34 +63,34 @@
   position: absolute;
   font-family: 'DM Sans', sans-serif;
   font-weight: 400;
-  font-size: 14px;
-  line-height: 18px;
+  font-size: 1.55vh;
+  line-height: 1.99vh;
   text-align: center;
   color: #000;
 }
 
 .nav-home {
-  left: 694px;
-  top: 23px;
+  left: 40.16vw;
+  top: 2.54vh;
 }
 
 .nav-func {
-  left: 771px;
-  top: 23px;
+  left: 44.62vw;
+  top: 2.54vh;
 }
 
 .nav-contact {
-  left: 914px;
-  top: 23px;
+  left: 52.89vw;
+  top: 2.54vh;
 }
 
 /* Header icon */
 .header-icon {
   position: absolute;
-  width: 32px;
-  height: 32px;
-  left: 1003px;
-  top: 17px;
+  width: 1.85vw;
+  height: 3.52vh;
+  left: 58.04vw;
+  top: 1.88vh;
   background: url('/image.png');
   background-size: cover;
 }
@@ -110,44 +98,29 @@
 /* Hero headline */
 .hero-title {
   position: absolute;
-  width: 747px;
-  height: 300px;
-  left: 267px;
-  top: 326px;
+  width: 43.23vw;
+  height: 33.1vh;
+  left: 15.45vw;
+  top: 11.96vh;
   font-family: 'DM Sans', sans-serif;
   font-weight: 900;
-  font-size: 91.744px;
-  line-height: 100px;
+  font-size: 10.12vh;
+  line-height: 11.04vh;
   letter-spacing: -0.05em;
   color: #000;
 }
 
 /* Hero description */
 .hero-desc {
-  position: absolute;
-  width: 987px;
-  height: 282px;
-  left: 267px;
-  top: 673px;
+  position: relative;
+  width: 57.12vw;
+  height: 31.11vh;
+  left: 15.45vw;
+  top: 54.25vh;
   font-family: 'DM Sans', sans-serif;
   font-weight: 400;
-  font-size: 35.8375px;
-  line-height: 47px;
+  font-size: 3.95vh;
+  line-height: 5.19vh;
   letter-spacing: -0.05em;
   color: #000;
-}
-
-/* Out now banner text */
-.out-now {
-  position: absolute;
-  width: 61px;
-  height: 18px;
-  left: calc(50% - 61px / 2 + 0.5px);
-  /*top: 79px;*/
-  font-family: 'DM Sans', sans-serif;
-  font-weight: 400;
-  font-size: 14px;
-  line-height: 18px;
-  text-align: center;
-  color: #ffffff;
 }

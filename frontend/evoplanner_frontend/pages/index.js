@@ -5,9 +5,6 @@ export default function Home() {
         <div className={styles.background}>
             <Navbar />
             <section>
-                <div className={styles["header-strip"]}>
-                    <p className={styles["out-now"]}>Out Now!</p>
-                </div>
                 <div>
                     <h1 className={styles["hero-title"]}>
                         Twoje wybory. <br />

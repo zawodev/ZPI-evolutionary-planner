@@ -1,0 +1,93 @@
+.loginframe {
+  position: absolute;
+  width: 21.99vw;
+  height: 59.57vh;
+  left: 39.0vw;
+  top: 26.3vh;
+  background: #FFFFFF;
+  border-radius: 15px;
+}
+
+.background {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  left: 0;
+  top: 0;
+  background: conic-gradient(from -68.9deg at 74.22% 21.83%,
+      #ffffff 0deg,
+      #ffffff 22.5deg,
+      #c584bf 116.83deg,
+      #2163ff 211.15deg,
+      #ffffff 360deg);
+
+}
+
+
+.logo {
+  position: absolute;
+  left: 8.1vw;
+  top: 5.21vh;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700;
+  font-size: 2.5vh;
+  line-height: 3.2vh;
+  text-align: center;
+  color: #000;
+}
+
+.logininput {
+  box-sizing: border-box;
+
+  position: absolute;
+  width: 18.52vw;
+  height: 4.41vh;
+  left: calc(50% - 18.52vw/2);
+  top: var(--top, 13.24vh);
+
+  border: 1px solid #000000;
+  border-radius: 15px;
+}
+
+.loginbutton {
+  box-sizing: border-box;
+  position: absolute;
+  align-items: center;
+  width: 18.52vw;
+  height: 4.41vh;
+  left: calc(50% - 18.52vw/2);
+  top: var(--top, 13.24vh);
+  ;
+
+  background: rgba(33, 99, 255, 0.08);
+  border: 1px solid rgba(33, 99, 255, 0.08);
+  border-radius: 10px;
+}
+.loginbutton:hover {
+  background: rgba(29, 78, 195, 0.08);
+}
+.infotext {
+  position: absolute;
+  width: 18.52vw;
+  height: 2vh;
+  left: var(--left, 1.74vw);
+  top: var(--top, 11vh);
+
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 1.55vh;
+  line-height: 2vh;
+
+  color: #000000;
+}
+
+.iconwrapper {
+  position: absolute;
+  flex-shrink: 0;
+  margin-right: 0.5rem; 
+  padding: 1.3vh;  
+  display: flex;             
+  align-items: center;       
+  justify-content: center;
+}
