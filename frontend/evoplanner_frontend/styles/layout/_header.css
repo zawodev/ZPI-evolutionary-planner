@@ -1,6 +1,5 @@
 /* layout/header.css */
 
-/* Navigation container - centered group */
 nav {
   display: flex;
   gap: 8px;
@@ -14,7 +13,6 @@ nav {
   justify-self: end;
 }
 
-/* Responsive layout adjustments */
 @media (max-width: 1024px) {
   .header {
     padding: 0 clamp(15px, 3vw, 40px);
@@ -67,7 +65,6 @@ nav {
     display: none;
   }
   
-  /* Show mobile menu icon instead */
   .header-icon--main {
     display: block;
   }
