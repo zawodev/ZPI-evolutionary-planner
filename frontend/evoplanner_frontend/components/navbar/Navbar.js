@@ -1,4 +1,5 @@
 // components/navbar/Navbar.js
+import Link from 'next/link';
 
 export default function Navbar() {
   return (
@@ -6,7 +7,9 @@ export default function Navbar() {
       <div className="logo logo--header">Rekruter+</div>
       
       <nav>
-        <button className="header-nav nav-home">Strona główna</button>
+        <Link href="/">
+          <button className="header-nav nav-home">Strona główna</button>
+        </Link>
         <button className="header-nav nav-func">Funkcjonalności</button>
         <button className="header-nav nav-contact">Kontakt</button>
       </nav>
@@ -14,8 +17,10 @@ export default function Navbar() {
       <div>
         <div className="header-icon header-icon--main"></div>
         <div className="login-btn-wrapper">
-          <button className="btn btn--primary btn--login">Login</button>
-        </div>
+          <Link href="/login">
+            <button className="btn btn--primary btn--login">Login</button>
+          </Link>        
+        </div>        
       </div>
     </header>
   );
