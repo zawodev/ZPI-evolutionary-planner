@@ -1,0 +1,11 @@
+/* components/card.css */
+
+.card {
+  background: #FFFFFF;
+  border-radius: 15px;
+}
+
+.card--login {
+  width: 21.99vw;
+  height: 59.57vh;
+}

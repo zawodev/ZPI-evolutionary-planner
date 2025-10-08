@@ -1,7 +1,7 @@
 // Login page with the form for a login. Register sends to a diffrent page
 import React, { useState } from "react";
 import styles from '@/styles/login.module.css';
-import Navbar from "@/components/Navbar";
+import Navbar from "@/components/navbar/Navbar";
 import Image from "next/image";
 export default function LoginPage() {
   const [login, setLogin] = useState("");

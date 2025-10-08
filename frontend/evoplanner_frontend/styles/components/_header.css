@@ -1,0 +1,36 @@
+/* components/header.css */
+
+.header {
+  position: absolute;
+  width: 100vw;
+  height: 7.5vh;
+  left: 0;
+  top: 0;
+  background: #ffffff;
+  opacity: 0.7;
+  z-index: 1000;
+}
+
+.header-nav {
+  position: absolute;
+  background: transparent;
+  border: none;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 400;
+  font-size: 1.55vh;
+  line-height: 1.99vh;
+  text-align: center;
+  color: #000;
+  cursor: pointer;
+}
+
+.header-icon {
+  position: absolute;
+  background-size: cover;
+}
+
+.header-icon--main {
+  width: 1.85vw;
+  height: 3.52vh;
+  background: url('/image.png');
+}

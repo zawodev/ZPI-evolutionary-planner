@@ -1,0 +1,19 @@
+/* components/input.css */
+
+.input {
+  box-sizing: border-box;
+  border: 1px solid #000000;
+  border-radius: 15px;
+  font-family: 'DM Sans', sans-serif;
+  padding: 0 1rem;
+}
+
+.input--login {
+  width: 18.52vw;
+  height: 4.41vh;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #2163ff;
+}

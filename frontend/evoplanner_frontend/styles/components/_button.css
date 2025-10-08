@@ -1,0 +1,41 @@
+/* components/button.css */
+
+.btn {
+  box-sizing: border-box;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 400;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn--primary {
+  background: #2163ff;
+  border: 1px solid #2163ff;
+  color: #ffffff;
+}
+
+.btn--secondary {
+  background: rgba(33, 99, 255, 0.08);
+  border: 1px solid rgba(33, 99, 255, 0.08);
+  color: #000000;
+}
+
+.btn--secondary:hover {
+  background: rgba(29, 78, 195, 0.08);
+}
+
+.btn--login {
+  width: 5.67vw;
+  height: 3.09vh;
+  border-radius: 15px;
+  font-size: 1.55vh;
+  line-height: 1.99vh;
+}
+
+.btn--form {
+  width: 18.52vw;
+  height: 4.41vh;
+  border-radius: 10px;
+}
