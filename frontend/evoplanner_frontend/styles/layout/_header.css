@@ -1,37 +1,74 @@
 /* layout/header.css */
-.nav-home {
-  left: 40.16vw;
-  top: 2.54vh;
+
+/* Navigation container - centered group */
+nav {
+  display: flex;
+  gap: 8px;
+  justify-self: center;
 }
 
-.nav-func {
-  left: 44.62vw;
-  top: 2.54vh;
+.header > div:last-child {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-self: end;
 }
 
-.nav-contact {
-  left: 52.89vw;
-  top: 2.54vh;
+/* Responsive layout adjustments */
+@media (max-width: 1024px) {
+  .header {
+    padding: 0 clamp(15px, 3vw, 40px);
+  }
+  
+  .header-nav {
+    font-size: 14px;
+    padding: 6px 12px;
+  }
+  
+  .logo {
+    font-size: 20px;
+  }
 }
 
-.login-btn-wrapper {
-  position: absolute;
-  left: 78.47vw;
-  top: 1.99vh;
+@media (max-width: 768px) {
+  .header {
+    height: 60px;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  
+  .logo {
+    font-size: 18px;
+  }
+  
+  .header-nav {
+    font-size: 13px;
+    padding: 5px 10px;
+    margin: 0 5px;
+  }
+  
+  .header-icon--main {
+    width: 20px;
+    height: 28px;
+  }
 }
 
-.logo--header {
-  position: absolute;
-  left: 14.99vw;
-  top: 2.1vh;
-  font-size: 2.5vh;
-  line-height: 3.2vh;
-}
-
-.logo--login {
-  position: absolute;
-  left: 8.1vw;
-  top: 5.21vh;
-  font-size: 2.5vh;
-  line-height: 3.2vh;
+@media (max-width: 640px) {
+  .header {
+    height: auto;
+    min-height: 60px;
+    padding: 10px 15px;
+  }
+  
+  /* Stack navigation on mobile */
+  .header > button:nth-of-type(1),
+  .header > button:nth-of-type(2),
+  .header > button:nth-of-type(3) {
+    display: none;
+  }
+  
+  /* Show mobile menu icon instead */
+  .header-icon--main {
+    display: block;
+  }
 }
