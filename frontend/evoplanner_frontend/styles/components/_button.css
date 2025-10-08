@@ -1,0 +1,93 @@
+/* style/components/button.css */
+.btn {
+  box-sizing: border-box;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  outline: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn--primary {
+  background: #2163ff;
+  border: 1px solid #2163ff;
+  color: #ffffff;
+}
+
+.btn--primary:hover {
+  background: #1952e0;
+  border-color: #1952e0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(33, 99, 255, 0.3);
+}
+
+.btn--primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(33, 99, 255, 0.2);
+}
+
+.btn--secondary {
+  background: rgba(33, 99, 255, 0.08);
+  border: 1px solid rgba(33, 99, 255, 0.08);
+  color: #000000;
+}
+
+.btn--secondary:hover {
+  background: rgba(33, 99, 255, 0.15);
+  border-color: rgba(33, 99, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.btn--secondary:active {
+  transform: translateY(0);
+}
+
+.btn--login {
+  min-width: clamp(80px, 5.67vw, 120px);
+  height: clamp(36px, 3.09vh, 44px);
+  padding: 8px 20px;
+  border-radius: 15px;
+  font-size: clamp(14px, 1.55vh, 16px);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.btn--form {
+  width: 100%;
+  max-width: clamp(200px, 18.52vw, 300px);
+  height: clamp(44px, 4.41vh, 52px);
+  border-radius: 10px;
+  font-size: clamp(15px, 1.8vh, 18px);
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .btn--login {
+    min-width: 80px;
+    height: 36px;
+    font-size: 14px;
+    padding: 6px 16px;
+  }
+  
+  .btn--form {
+    max-width: 100%;
+    height: 48px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .btn--login {
+    min-width: 70px;
+    height: 32px;
+    font-size: 13px;
+    padding: 5px 12px;
+    border-radius: 12px;
+  }
+}

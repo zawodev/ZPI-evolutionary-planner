@@ -1,0 +1,33 @@
+/* style/components/input.css */
+
+.input {
+  box-sizing: border-box;
+  width: 100%;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: clamp(14px, 1.6vh, 16px);
+  padding: clamp(10px, 1.2vh, 14px) clamp(14px, 1.5vw, 18px);
+  transition: all 0.3s ease;
+  background: #ffffff;
+}
+
+.input--login {
+  height: clamp(44px, 4.41vh, 52px);
+}
+
+.input:hover {
+  border-color: #cbd5e1;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #2163ff;
+  box-shadow: 0 0 0 3px rgba(33, 99, 255, 0.1);
+  background: #ffffff;
+}
+
+.input::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+}

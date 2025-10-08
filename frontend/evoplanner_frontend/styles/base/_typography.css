@@ -1,0 +1,19 @@
+/* style/base/typography.css */
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 400;
+  color: #000000;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.font-black {
+  font-weight: 900;
+}
+
+.text-center {
+  text-align: center;
+}

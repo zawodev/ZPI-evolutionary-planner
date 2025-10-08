@@ -1,0 +1,58 @@
+/* hero/layout/hero.css */
+
+.hero-title {
+  max-width: clamp(300px, 43.23vw, 900px);
+  margin-left: clamp(20px, 15.45vw, 200px);
+  margin-top: clamp(80px, 11.96vh, 150px);
+  font-weight: 900;
+  font-size: clamp(36px, 10.12vh, 120px);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: #000;
+}
+
+.hero-desc {
+  max-width: clamp(300px, 57.12vw, 1000px);
+  margin-left: clamp(20px, 15.45vw, 200px);
+  margin-top: clamp(30px, 8vh, 80px);
+  font-size: clamp(16px, 3.95vh, 32px);
+  line-height: 1.5;
+  letter-spacing: -0.02em;
+  color: #374151;
+}
+
+@media (max-width: 1024px) {
+  .hero-title {
+    font-size: clamp(32px, 8vh, 80px);
+  }
+  
+  .hero-desc {
+    font-size: clamp(15px, 3vh, 24px);
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-title {
+    margin-left: 20px;
+    margin-right: 20px;
+    font-size: 36px;
+  }
+  
+  .hero-desc {
+    margin-left: 20px;
+    margin-right: 20px;
+    font-size: 16px;
+    margin-top: 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero-title {
+    font-size: 28px;
+    line-height: 1.2;
+  }
+  
+  .hero-desc {
+    font-size: 14px;
+  }
+}
