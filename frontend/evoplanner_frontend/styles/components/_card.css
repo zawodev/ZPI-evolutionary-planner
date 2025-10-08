@@ -1,11 +1,33 @@
-/* components/card.css */
+/* style/components/card.css */
 
 .card {
   background: #FFFFFF;
-  border-radius: 15px;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
 }
 
 .card--login {
-  width: 21.99vw;
-  height: 59.57vh;
+  width: clamp(300px, 21.99vw, 450px);
+  min-height: clamp(400px, 59.57vh, 700px);
+  padding: clamp(30px, 4vh, 50px) clamp(25px, 3vw, 40px);
+}
+
+@media (max-width: 1024px) {
+  .card--login {
+    width: clamp(280px, 30vw, 400px);
+  }
+}
+
+@media (max-width: 768px) {
+  .card--login {
+    width: 100%;
+    max-width: 100%;
+    min-height: auto;
+  }
 }
