@@ -25,7 +25,7 @@ class LoginView(APIView):
         user = authenticate(request, username=username, password=password)
 
         if not user:
-            return Response({"detail": "Invalid logging credentials 😨"}, status=400)
+            return Response({"detail": "Invalid logging credentials"}, status=400)
 
         refresh = RefreshToken.for_user(user)
         return Response({
@@ -40,9 +40,9 @@ class LogoutView(APIView):
         try:
             refresh_token = request.data["refresh"]
             token = RefreshToken(refresh_token)
-            return Response({"detail": "Logged out 😎"})
+            return Response({"detail": "Logged out"})
         except Exception:
-            return Response({"detail": "Error logging out 🤔"}, status=400)
+            return Response({"detail": "Error logging out"}, status=400)
 
 
 class UserProfileView(APIView):
