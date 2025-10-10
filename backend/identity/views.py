@@ -29,7 +29,7 @@ class LoginView(APIView):
         user = authenticate(request, username=username, password=password)
 
         if not user:
-            return Response({"detail": "Invalid logging credentials 😨"}, status=400)
+            return Response({"detail": "Invalid logging credentials"}, status=400)
 
         refresh = RefreshToken.for_user(user)
         return Response({
@@ -44,9 +44,9 @@ class LogoutView(APIView):
         try:
             refresh_token = request.data["refresh"]
             token = RefreshToken(refresh_token)
-            return Response({"detail": "Logged out 😎"})
+            return Response({"detail": "Logged out"})
         except Exception:
-            return Response({"detail": "Error logging out 🤔"}, status=400)
+            return Response({"detail": "Error logging out"}, status=400)
 
 
 class UserProfileView(APIView):
@@ -74,7 +74,7 @@ class OrganizationDeleteView(APIView):
     def delete(self, request, organization_id):
         organization = get_object_or_404(Organization, pk=organization_id)
         organization.delete()
-        return Response({"detail": "Organization deleted 🐉"}, status=status.HTTP_204_NO_CONTENT)
+        return Response({"detail": "Organization deleted"}, status=status.HTTP_204_NO_CONTENT)
 
 
 class GroupAddView(APIView):
@@ -94,7 +94,7 @@ class GroupDeleteView(APIView):
     def delete(self, request, group_id):
         group = get_object_or_404(Group, pk=group_id)
         group.delete()
-        return Response({"detail": "Group deleted 🙁"}, status=status.HTTP_204_NO_CONTENT)
+        return Response({"detail": "Group deleted"}, status=status.HTTP_204_NO_CONTENT)
 
 
 class UserGroupAddView(APIView):
@@ -123,16 +123,16 @@ class UserGroupDeleteView(APIView):
 
         if not user_id or not group_id:
             return Response(
-                {"detail": "Required fields: user, group 😨"},
+                {"detail": "Required fields: user, group"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
             user_group = UserGroup.objects.get(user_id=user_id, group_id=group_id)
             user_group.delete()
-            return Response({"detail": "User removed from group 💥"}, status=status.HTTP_204_NO_CONTENT)
+            return Response({"detail": "User removed from group"}, status=status.HTTP_204_NO_CONTENT)
         except UserGroup.DoesNotExist:
             return Response(
-                {"detail": "Relation user–group does not exist 🚨"},
+                {"detail": "Relation user–group does not exist"},
                 status=status.HTTP_404_NOT_FOUND
             )
