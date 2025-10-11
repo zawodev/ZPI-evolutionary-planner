@@ -1,0 +1,90 @@
+/* style/components/header.css */
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 70px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  z-index: 1000;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 0 clamp(20px, 5vw, 120px);
+  transition: all 0.3s ease;
+}
+
+.logo {
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700;
+  font-size: clamp(18px, 2.5vh, 24px);
+  color: #000;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  justify-self: start;
+}
+
+.logo:hover {
+  color: #3b82f6;
+}
+
+.header-nav {
+  background: transparent;
+  border: none;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  font-size: clamp(14px, 1.5vh, 16px);
+  color: #374151;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.header-nav:hover {
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.header-nav::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 80%;
+  height: 2px;
+  background: #3b82f6;
+  transition: transform 0.3s ease;
+}
+
+.header-nav:hover::after {
+  transform: translateX(-50%) scaleX(1);
+}
+
+.header-icon {
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.header-icon--main {
+  width: clamp(20px, 1.85vw, 30px);
+  height: clamp(28px, 3.52vh, 40px);
+  background-image: url('/image.png');
+}
+
+.header-icon--main:hover {
+  transform: scale(1.1);
+}
+
+.login-btn-wrapper {
+  display: flex;
+  align-items: center;
+}

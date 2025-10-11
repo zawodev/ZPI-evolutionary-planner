@@ -1,0 +1,75 @@
+/* style/layout/login.css */
+
+.login-background {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  left: 0;
+  top: 0;
+  background: conic-gradient(
+    from -68.9deg at 74.22% 21.83%,
+    #ffffff 0deg,
+    #ffffff 22.5deg,
+    #c584bf 116.83deg,
+    #2163ff 211.15deg,
+    #ffffff 360deg
+  );
+  overflow-y: auto;
+}
+
+.login-frame {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 450px;
+}
+
+.login-input-wrapper {
+  width: 100%;
+  margin-bottom: clamp(16px, 2vh, 24px);
+}
+
+.login-button-wrapper {
+  width: 100%;
+  margin-top: clamp(20px, 3vh, 32px);
+}
+
+.info-text {
+  width: 100%;
+  font-size: clamp(13px, 1.55vh, 16px);
+  line-height: 1.5;
+  color: #374151;
+  margin-bottom: clamp(8px, 1vh, 12px);
+}
+
+.icon-wrapper {
+  flex-shrink: 0;
+  margin-right: 0.5rem;
+  padding: clamp(8px, 1.3vh, 12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(33, 99, 255, 0.05);
+  transition: all 0.3s ease;
+}
+
+.icon-wrapper:hover {
+  background: rgba(33, 99, 255, 0.1);
+  transform: scale(1.05);
+}
+
+@media (max-width: 768px) {
+  .login-frame {
+    width: 95%;
+    top: 55%;
+  }
+}
+
+@media (max-width: 640px) {
+  .login-frame {
+    top: 60%;
+  }
+}

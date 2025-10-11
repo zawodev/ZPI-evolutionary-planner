@@ -1,0 +1,70 @@
+/* style/layout/header.css */
+
+nav {
+  display: flex;
+  gap: 8px;
+  justify-self: center;
+}
+
+.header > div:last-child {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-self: end;
+}
+
+@media (max-width: 1024px) {
+  .header {
+    padding: 0 clamp(15px, 3vw, 40px);
+  }
+  
+  .header-nav {
+    font-size: 14px;
+    padding: 6px 12px;
+  }
+  
+  .logo {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    height: 60px;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  
+  .logo {
+    font-size: 18px;
+  }
+  
+  .header-nav {
+    font-size: 13px;
+    padding: 5px 10px;
+    margin: 0 5px;
+  }
+  
+  .header-icon--main {
+    width: 20px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 640px) {
+  .header {
+    height: auto;
+    min-height: 60px;
+    padding: 10px 15px;
+  }
+  
+  .header > button:nth-of-type(1),
+  .header > button:nth-of-type(2),
+  .header > button:nth-of-type(3) {
+    display: none;
+  }
+  
+  .header-icon--main {
+    display: block;
+  }
+}
