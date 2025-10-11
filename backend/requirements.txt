@@ -1,6 +1,8 @@
 # djangocore
 Django==5.2.4
 djangorestframework==3.16.0
+djangorestframework-simplejwt==5.5.1
+
 
 # api documentation
 drf-spectacular==0.28.0
