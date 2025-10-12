@@ -45,7 +45,7 @@ export default function LoginPage() {
             fontSize: 'clamp(32px, 4vh, 48px)',
             marginBottom: '24px'
           }}>
-            Rekruter+
+            OptiSlots
           </strong>
           
           <form onSubmit={handleLogin}>
@@ -74,9 +74,12 @@ export default function LoginPage() {
             </div>
 
             <div className="login-button-wrapper">
-              <button type="submit" className="btn btn--primary btn--form">
-                Zaloguj
-              </button>
+              <Link href='/entries'>
+                {/* TODO: Later on change the type to submit when backend is ready */}
+                <button type="button" className="btn btn--primary btn--form">
+                  Zaloguj
+                </button>
+              </Link>
             </div>
 
             <div style={{ textAlign: 'center', margin: '24px 0' }}>
@@ -124,14 +127,14 @@ export default function LoginPage() {
               </button>
             </div>
 
-            <div style={{ textAlign: 'center', marginTop: '24px' }}>
+            {/* <div style={{ textAlign: 'center', marginTop: '24px' }}>
               <p className="info-text">
                 Nie masz konta?{' '}
                 <Link href="/register" style={{ color: '#2163ff', fontWeight: 500 }}>
                   Zarejestruj się
                 </Link>
               </p>
-            </div>
+            </div> */}
           </form>
         </div>
       </div>
