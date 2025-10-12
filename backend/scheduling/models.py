@@ -16,28 +16,40 @@ class Subject(models.Model):
 
 
 class Recruitment(models.Model):
-    SEMESTER_CHOICES = [
-        ('winter', 'Winter'),
-        ('summer', 'Summer'),
+    CYCLE_TYPE_CHOICES = [
+        ('weekly', 'Weekly'),
+        ('biweekly', 'Biweekly'),
+        ('monthly', 'Monthly'),
     ]
-    
+
     recruitment_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     recruitment_name = models.CharField(max_length=255)
-    year = models.IntegerField()
-    semester = models.CharField(max_length=20, choices=SEMESTER_CHOICES)
+
+    start_time = models.TimeField(blank=True, null=True)
+    end_time = models.TimeField(blank=True, null=True)
+
+    start_date = models.DateField(blank=True, null=True)
+    end_date = models.DateField(blank=True, null=True)
+
+    cycle_type = models.CharField(
+        max_length=20,
+        choices=CYCLE_TYPE_CHOICES,
+        default='weekly',
+        db_column='cycletype'
+    )
 
     class Meta:
         db_table = 'scheduling_recruitments'
 
     def __str__(self):
-        return f"{self.recruitment_name} ({self.year} - {self.semester})"
+        return f"{self.recruitment_name} ({self.cycle_type})"
 
 
 class Plan(models.Model):
     STATUS_CHOICES = [
         ('draft', 'Draft'),
-        ('ready', 'Ready'),
-        ('archived', 'Archived'),
+        ('optimized', 'Optimized'),
+        ('published', 'Published'),
     ]
     
     plan_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -114,12 +126,6 @@ class RoomTag(models.Model):
 
 
 class Meeting(models.Model):
-    CYCLE_TYPE_CHOICES = [
-        ('weekly', 'Weekly'),
-        ('biweekly', 'Biweekly'),
-        ('monthly', 'Monthly'),
-    ]
-    
     meeting_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     plan = models.ForeignKey(
         Plan,
@@ -151,7 +157,7 @@ class Meeting(models.Model):
         db_column='groupid',
         related_name='meetings'
     )
-    teacher = models.ForeignKey(
+    host_user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         db_column='teacherid',
@@ -161,7 +167,6 @@ class Meeting(models.Model):
     end_hour = models.IntegerField(help_text="End hour (0-23)")
     day_of_week = models.IntegerField(help_text="Day of week (0=Monday, 6=Sunday)")
     day_of_cycle = models.IntegerField(help_text="Day in cycle: weekly 0-6, biweekly 0-13, monthly 0-30")
-    cycle_type = models.CharField(max_length=20, choices=CYCLE_TYPE_CHOICES, default='weekly')
 
     class Meta:
         db_table = 'scheduling_meetings'

@@ -10,8 +10,16 @@ class SubjectAdmin(admin.ModelAdmin):
 
 @admin.register(Recruitment)
 class RecruitmentAdmin(admin.ModelAdmin):
-    list_display = ('recruitment_id', 'recruitment_name', 'year', 'semester')
-    list_filter = ('year', 'semester')
+    list_display = (
+        'recruitment_id',
+        'recruitment_name',
+        'start_date',
+        'end_date',
+        'cycle_type',
+        'constraints',
+        'management_preferences',
+    )
+    list_filter = ('cycle_type',)
     search_fields = ('recruitment_name',)
 
 
@@ -44,8 +52,8 @@ class RoomTagAdmin(admin.ModelAdmin):
 
 @admin.register(Meeting)
 class MeetingAdmin(admin.ModelAdmin):
-    list_display = ('meeting_id', 'subject', 'group', 'teacher', 'room', 'day_of_week', 'start_hour', 'end_hour', 'cycle_type')
-    list_filter = ('cycle_type', 'day_of_week', 'recruitment')
-    search_fields = ('subject__subject_name', 'group__group_name', 'teacher__first_name', 'teacher__last_name')
-    raw_id_fields = ('plan', 'recruitment', 'subject', 'room', 'group', 'teacher')
+    list_display = ('meeting_id', 'subject', 'group', 'host_user', 'room', 'day_of_week', 'start_hour', 'end_hour')
+    list_filter = ('day_of_week', 'recruitment')
+    search_fields = ('subject__subject_name', 'group__group_name', 'host_user__first_name', 'host_user__last_name')
+    raw_id_fields = ('plan', 'recruitment', 'subject', 'room', 'group', 'host_user')
 
