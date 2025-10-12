@@ -99,11 +99,11 @@ int main() {
         //return 0;
         Logger::info("Starting Optimizer Service...");
 
-        //std::unique_ptr<EventReceiver> receiver = std::make_unique<FileEventReceiver>("data/input");
-        std::unique_ptr<EventReceiver> receiver = std::make_unique<RedisEventReceiver>("redis://localhost:6379");
+        std::unique_ptr<EventReceiver> receiver = std::make_unique<FileEventReceiver>("data/input");
+        //std::unique_ptr<EventReceiver> receiver = std::make_unique<RedisEventReceiver>("redis://localhost:6379");
         
-        //std::unique_ptr<EventSender> sender = std::make_unique<FileEventSender>("data/output");
-        std::unique_ptr<EventSender> sender = std::make_unique<RedisEventSender>("redis://localhost:6379");
+        std::unique_ptr<EventSender> sender = std::make_unique<FileEventSender>("data/output");
+        //std::unique_ptr<EventSender> sender = std::make_unique<RedisEventSender>("redis://localhost:6379");
 
         Logger::info("Optimizer service started. Waiting for jobs...");
 
