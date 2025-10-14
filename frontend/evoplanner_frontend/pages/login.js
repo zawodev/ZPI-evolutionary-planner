@@ -107,7 +107,7 @@ export default function LoginPage() {
                   padding: '8px' 
                 }}>
                   <Image 
-                    src="/googleicon.svg" 
+                    src="/images/googleicon.svg" 
                     alt="Google Logo" 
                     width={20} 
                     height={20}
