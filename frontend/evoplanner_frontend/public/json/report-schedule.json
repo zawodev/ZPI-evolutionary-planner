@@ -1,72 +1,61 @@
 {
   "monday": [
-    { 
-      "start": "7:00", 
-      "end": "11:00", 
-      "type": "prefer", 
-      "label": "Chce mieć zajęcia" 
+    {
+      "start": "8:30",
+      "end": "12:15",
+      "type": "prefer",
+      "label": "Chce mieć zajęcia",
+      "priority": 1
     },
-    { 
-      "start": "13:00", 
-      "end": "18:00", 
-      "type": "prefer", 
-      "label": "Chce mieć zajęcia" 
+    {
+      "start": "14:00",
+      "end": "16:00",
+      "type": "prefer",
+      "label": "Chce mieć zajęcia",
+      "priority": 8
     }
   ],
   "tuesday": [
-    { 
-      "start": "7:00", 
-      "end": "9:00", 
-      "type": "avoid", 
-      "label": "Brak zajęć" 
-    },
-    { 
-      "start": "10:00", 
-      "end": "15:00", 
-      "type": "prefer", 
-      "label": "Chce mieć zajęcia" 
-    },
-    { 
-      "start": "16:00", 
-      "end": "18:00", 
-      "type": "avoid", 
-      "label": "Brak zajęć" 
+    {
+      "start": "7:45",
+      "end": "14:00",
+      "type": "prefer",
+      "label": "Chce mieć zajęcia",
+      "priority": 1
     }
   ],
   "wednesday": [
-    { 
-      "start": "7:00", 
-      "end": "11:00", 
-      "type": "avoid", 
-      "label": "Brak zajęć" 
+    {
+      "start": "7:45",
+      "end": "12:30",
+      "type": "prefer",
+      "label": "Chce mieć zajęcia",
+      "priority": 1
     },
-    { 
-      "start": "14:00", 
-      "end": "18:00", 
-      "type": "prefer", 
-      "label": "Chce mieć zajęcia" 
+    {
+      "start": "15:15",
+      "end": "17:15",
+      "type": "avoid",
+      "label": "Brak zajęć",
+      "priority": 1
     }
   ],
   "thursday": [
-    { 
-      "start": "7:00", 
-      "end": "18:00", 
-      "type": "prefer", 
-      "label": "Chce mieć zajęcia" 
+    {
+      "start": "7:00",
+      "end": "10:30",
+      "type": "prefer",
+      "label": "Chce mieć zajęcia",
+      "priority": 6
     }
   ],
   "friday": [
-    { 
-      "start": "8:00", 
-      "end": "12:00", 
-      "type": "prefer", 
-      "label": "Chce mieć zajęcia" 
-    },
-    { 
-      "start": "12:00", 
-      "end": "18:00", 
-      "type": "avoid", 
-      "label": "Brak zajęć" 
+    {
+      "start": "9:45",
+      "end": "15:45",
+      "type": "prefer",
+      "label": "Chce mieć zajęcia",
+      "priority": 1
     }
   ]
 }
