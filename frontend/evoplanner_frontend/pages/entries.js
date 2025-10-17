@@ -407,32 +407,12 @@ export default function EntriesPage() {
               </div>
               <div className="entries-section">
                 <h3 className="entries-section-title">Akcje:</h3>
-                <button
-                  onClick={saveScheduleToFile}
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    background: 'linear-gradient(135deg, #2163ff 0%, #1e40af 100%)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '10px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s',
-                    boxShadow: '0 4px 15px rgba(33, 99, 255, 0.2)',
-                    fontFamily: "'DM Sans', sans-serif"
-                  }}
-                  onMouseOver={(e) => {
-                    e.target.style.transform = 'translateY(-2px)';
-                    e.target.style.boxShadow = '0 6px 20px rgba(33, 99, 255, 0.3)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.target.style.transform = 'translateY(0)';
-                    e.target.style.boxShadow = '0 4px 15px rgba(33, 99, 255, 0.2)';
-                  }}
-                >
-                  Zapisz do JSON
+                <button onClick={saveScheduleToFile} className="btn btn--primary btn--filler">
+                  Zachowaj zmiany
+                </button>
+                <div className="pt-md"></div>
+                <button onClick={clearAllPreferences} className="btn btn--delete btn--filler">
+                  Wyczyść Preferencje
                 </button>
               </div>
             </aside>
@@ -446,10 +426,10 @@ export default function EntriesPage() {
                   <div className="entries-header">
                     <h2 className="entries-title">Wybrane Zgłoszenia: IST - Lato 2024/25</h2>
                     <div className="entries-stats">
-                      <div className="entries-badge priority">
+                      <div className="label soft-blue">
                         Punkty Priorytetu: {calculateUsedPriority()}/{maxPriority}
                       </div>
-                      <div className="entries-badge deadline">
+                      <div className="label soft-yellow">
                         Zamknięcie za: 3d 7h
                       </div>
                     </div>
@@ -637,14 +617,7 @@ export default function EntriesPage() {
                 </div>
 
                 <div>
-                  <label style={{ 
-                    display: 'block', 
-                    marginBottom: '8px', 
-                    fontSize: '13px', 
-                    fontWeight: '600',
-                    color: '#374151',
-                    fontFamily: "'DM Sans', sans-serif"
-                  }}>
+                  <label className="label soft-blue">
                     Punkty priorytetu: {pendingSlot?.priority}
                   </label>
                   <input
@@ -861,75 +834,13 @@ export default function EntriesPage() {
                 </div>
 
                 <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                  <button
-                    onClick={handleUpdateSlot}
-                    style={{
-                      flex: 1,
-                      padding: '14px 20px',
-                      background: 'linear-gradient(135deg, #2163ff 0%, #1e40af 100%)',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '12px',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s',
-                      boxShadow: '0 4px 15px rgba(33, 99, 255, 0.3)',
-                      fontFamily: "'DM Sans', sans-serif"
-                    }}
-                    onMouseOver={(e) => {
-                      e.target.style.transform = 'translateY(-2px)';
-                      e.target.style.boxShadow = '0 6px 20px rgba(33, 99, 255, 0.4)';
-                    }}
-                    onMouseOut={(e) => {
-                      e.target.style.transform = 'translateY(0)';
-                      e.target.style.boxShadow = '0 4px 15px rgba(33, 99, 255, 0.3)';
-                    }}
-                  >
+                  <button onClick={handleUpdateSlot} className="btn btn--primary btn--filler">
                     Zapisz
                   </button>
-                  <button
-                    onClick={handleDeleteSlot}
-                    style={{
-                      padding: '14px 20px',
-                      backgroundColor: '#fee2e2',
-                      color: '#dc2626',
-                      border: '2px solid #fecaca',
-                      borderRadius: '12px',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      fontFamily: "'DM Sans', sans-serif"
-                    }}
-                    onMouseOver={(e) => {
-                      e.target.style.backgroundColor = '#fecaca';
-                      e.target.style.borderColor = '#ef4444';
-                    }}
-                    onMouseOut={(e) => {
-                      e.target.style.backgroundColor = '#fee2e2';
-                      e.target.style.borderColor = '#fecaca';
-                    }}
-                  >
+                  <button onClick={handleDeleteSlot} className="btn btn--delete">
                     Usuń
                   </button>
-                  <button
-                    onClick={handleCloseModal}
-                    style={{
-                      padding: '14px 20px',
-                      backgroundColor: '#f3f4f6',
-                      color: '#374151',
-                      border: '2px solid #e5e7eb',
-                      borderRadius: '12px',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      fontFamily: "'DM Sans', sans-serif"
-                    }}
-                    onMouseOver={(e) => e.target.style.backgroundColor = '#e5e7eb'}
-                    onMouseOut={(e) => e.target.style.backgroundColor = '#f3f4f6'}
-                  >
+                  <button onClick={handleCloseModal} className="btn btn--neutral">
                     Anuluj
                   </button>
                 </div>

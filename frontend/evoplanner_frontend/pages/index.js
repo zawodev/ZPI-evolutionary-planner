@@ -1,7 +1,7 @@
 export default function Home() {
     return (
         <>
-            <div className="login-background">
+            <div className="background">
                 <section>
                     <div>
                         <h1 className="hero-title font-black">

@@ -1,3 +1,5 @@
+/* style/layout/_entries.css */
+
 /* Container */
 .entries-container {
   min-height: 100vh;
@@ -100,24 +102,7 @@
   gap: 15px;
 }
 
-.entries-badge {
-  padding: 8px 16px;
-  border-radius: 10px;
-  font-size: clamp(12px, 1.4vh, 14px);
-  font-weight: 500;
-}
 
-.entries-badge.priority {
-  background: rgba(33, 99, 255, 0.1);
-  color: #2163ff;
-  border: 1px solid rgba(33, 99, 255, 0.3);
-}
-
-.entries-badge.deadline {
-  background: rgba(234, 179, 8, 0.1);
-  color: #ca8a04;
-  border: 1px solid rgba(234, 179, 8, 0.3);
-}
 
 /* Schedule Grid */
 .schedule-grid {

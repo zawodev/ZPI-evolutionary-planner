@@ -33,7 +33,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="login-background">
+    <div className="background">
       <Navbar />
       
       <div className="login-frame">
