@@ -2,6 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from django.shortcuts import get_object_or_404
+from datetime import datetime
 
 from .models import Subject, Recruitment, Plan, Room, Tag, RoomTag, Meeting
 from .serializers import (
@@ -13,6 +14,7 @@ from .serializers import (
     RoomTagSerializer,
     MeetingSerializer
 )
+from .services import is_room_available
 
 
 class BaseCrudView(APIView):
@@ -99,3 +101,25 @@ class MeetingView(BaseCrudView):
     model = Meeting
     serializer_class = MeetingSerializer
     lookup_field = 'meeting_id'
+
+
+class RoomAvailabilityAPIView(APIView):
+    def get(self, request, room_id):
+        # oczekujemy query params: ?start=2025-10-17T09:00&end=2025-10-17T11:00
+        start = request.query_params.get('start')
+        end = request.query_params.get('end')
+        if not start or not end:
+            return Response({'detail': 'Missing start/end'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            start_dt = datetime.fromisoformat(start)
+            end_dt = datetime.fromisoformat(end)
+        except ValueError:
+            return Response({'detail': 'Bad datetime format'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            room = Room.objects.get(pk=room_id)
+        except Room.DoesNotExist:
+            return Response({'detail': 'Room not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        available = is_room_available(room, start_dt, end_dt)
+        return Response({'available': available})

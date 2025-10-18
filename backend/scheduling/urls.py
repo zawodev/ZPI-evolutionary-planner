@@ -7,6 +7,7 @@ from .views import (
     TagView,
     RoomTagView,
     MeetingView,
+    RoomAvailabilityAPIView
 )
 
 urlpatterns = [
@@ -21,6 +22,7 @@ urlpatterns = [
 
     path('rooms/', RoomView.as_view(), name='rooms'),
     path('rooms/<uuid:pk>/', RoomView.as_view(), name='room-detail'),
+    path('rooms/<uuid:room_id>/availability/', RoomAvailabilityAPIView.as_view(), name='room-availability'),
 
     path('tags/', TagView.as_view(), name='tags'),
     path('tags/<uuid:pk>/', TagView.as_view(), name='tag-detail'),
