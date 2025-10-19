@@ -5,6 +5,8 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 
 from .models import Subject, Recruitment, Room, Tag, RoomTag, Meeting
+from identity.permissions import IsOfficeUser
+
 from .serializers import (
     SubjectSerializer,
     RecruitmentSerializer,
@@ -17,7 +19,7 @@ from .services import get_active_meetings_for_room
 
 
 class BaseCrudView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsOfficeUser]
     model = None
     serializer_class = None
     lookup_field = None
