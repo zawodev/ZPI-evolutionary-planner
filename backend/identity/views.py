@@ -8,6 +8,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import (
     RegisterSerializer, UserSerializer, OrganizationSerializer, GroupSerializer, UserGroupSerializer
 )
+from scheduling.serializers import MeetingSerializer
+from .services import get_active_meetings_for_user
 
 User = get_user_model()
 
@@ -136,3 +138,14 @@ class UserGroupDeleteView(APIView):
                 {"detail": "Relation user–group does not exist"},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+
+class ActiveMeetingsByUserView(APIView):
+    """Return all meetings where the given user is host_user and the recruitment is active."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, user_pk):
+        get_object_or_404(User, pk=user_pk)
+        qs = get_active_meetings_for_user(user_pk)
+        serializer = MeetingSerializer(qs, many=True)
+        return Response(serializer.data)
