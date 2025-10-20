@@ -2,21 +2,24 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from django.shortcuts import get_object_or_404
+from django.contrib.auth import get_user_model
 
-from .models import Subject, Recruitment, Plan, Room, Tag, RoomTag, Meeting
+from .models import Subject, Recruitment, Room, Tag, RoomTag, Meeting
+from identity.permissions import IsOfficeUser
+
 from .serializers import (
     SubjectSerializer,
     RecruitmentSerializer,
-    PlanSerializer,
     RoomSerializer,
     TagSerializer,
     RoomTagSerializer,
     MeetingSerializer
 )
+from .services import get_active_meetings_for_room
 
 
 class BaseCrudView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsOfficeUser]
     model = None
     serializer_class = None
     lookup_field = None
@@ -71,12 +74,6 @@ class RecruitmentView(BaseCrudView):
     lookup_field = 'recruitment_id'
 
 
-class PlanView(BaseCrudView):
-    model = Plan
-    serializer_class = PlanSerializer
-    lookup_field = 'plan_id'
-
-
 class RoomView(BaseCrudView):
     model = Room
     serializer_class = RoomSerializer
@@ -99,3 +96,17 @@ class MeetingView(BaseCrudView):
     model = Meeting
     serializer_class = MeetingSerializer
     lookup_field = 'meeting_id'
+
+
+User = get_user_model()
+
+class ActiveMeetingsByRoomView(APIView):
+    """Return all meetings for a room whose recruitment has plan_status == 'active'."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, room_pk):
+        get_object_or_404(Room, **{'room_id': room_pk})
+        qs = get_active_meetings_for_room(room_pk)
+        serializer = MeetingSerializer(qs, many=True)
+        return Response(serializer.data)
+

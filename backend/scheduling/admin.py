@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Subject, Recruitment, Plan, Room, Tag, RoomTag, Meeting
+from .models import Subject, Recruitment, Room, Tag, RoomTag, Meeting
 
 
 @admin.register(Subject)
@@ -16,19 +16,12 @@ class RecruitmentAdmin(admin.ModelAdmin):
         'start_date',
         'end_date',
         'cycle_type',
-        'constraints',
-        'management_preferences',
+        'plan_status',
+        'default_token_count',
+        'round_count',
     )
-    list_filter = ('cycle_type',)
+    list_filter = ('cycle_type', 'plan_status')
     search_fields = ('recruitment_name',)
-
-
-@admin.register(Plan)
-class PlanAdmin(admin.ModelAdmin):
-    list_display = ('plan_id', 'name', 'recruitment', 'status', 'created_by', 'created_at')
-    list_filter = ('status', 'created_at')
-    search_fields = ('name', 'description')
-    readonly_fields = ('created_at',)
 
 
 @admin.register(Room)
@@ -52,8 +45,22 @@ class RoomTagAdmin(admin.ModelAdmin):
 
 @admin.register(Meeting)
 class MeetingAdmin(admin.ModelAdmin):
-    list_display = ('meeting_id', 'subject', 'group', 'host_user', 'room', 'day_of_week', 'start_hour', 'end_hour')
+    list_display = (
+        'meeting_id',
+        'subject',
+        'group',
+        'host_user',
+        'room',
+        'recruitment',
+        'day_of_week',
+        'start_hour',
+        'end_hour',
+    )
     list_filter = ('day_of_week', 'recruitment')
-    search_fields = ('subject__subject_name', 'group__group_name', 'host_user__first_name', 'host_user__last_name')
-    raw_id_fields = ('plan', 'recruitment', 'subject', 'room', 'group', 'host_user')
-
+    search_fields = (
+        'subject__subject_name',
+        'group__group_name',
+        'host_user__first_name',
+        'host_user__last_name',
+    )
+    raw_id_fields = ('recruitment', 'subject', 'room', 'group', 'host_user', 'required_tag')

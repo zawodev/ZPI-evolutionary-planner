@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Subject, Recruitment, Plan, Room, Tag, RoomTag, Meeting
+from .models import Subject, Recruitment, Room, Tag, RoomTag, Meeting
 
 
 class SubjectSerializer(serializers.ModelSerializer):
@@ -11,12 +11,6 @@ class SubjectSerializer(serializers.ModelSerializer):
 class RecruitmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recruitment
-        fields = '__all__'
-
-
-class PlanSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Plan
         fields = '__all__'
 
 
