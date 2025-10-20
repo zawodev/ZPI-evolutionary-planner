@@ -10,13 +10,16 @@ from .views import (
     GroupDeleteView,
     UserGroupAddView,
     UserGroupDeleteView,
+    ActiveMeetingsByUserView
 )
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
     path('login/', LoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
+
     path('user/', UserProfileView.as_view(), name='user'),
+    path('user/<user_pk>/availability/', ActiveMeetingsByUserView.as_view(), name='user-availability'),
 
     path('organizations/add/', OrganizationAddView.as_view(), name='organization-add'),
     path('organizations/delete/<uuid:organization_id>/', OrganizationDeleteView.as_view(), name='organization-delete'),
