@@ -25,7 +25,8 @@ urlpatterns = [
     path('api/v1/', include([
         path('optimizer/', include('optimizer.urls')),
         path('identity/', include('identity.urls')),
-        path('scheduling/', include('scheduling.urls'))
+        path('scheduling/', include('scheduling.urls')),
+        path('preferences/', include('preferences.urls')),
     ])),
     
     # api docs
