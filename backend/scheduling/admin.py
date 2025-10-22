@@ -10,16 +10,7 @@ class SubjectAdmin(admin.ModelAdmin):
 
 @admin.register(Recruitment)
 class RecruitmentAdmin(admin.ModelAdmin):
-    list_display = (
-        'recruitment_id',
-        'recruitment_name',
-        'start_date',
-        'end_date',
-        'cycle_type',
-        'plan_status',
-        'default_token_count',
-        'round_count',
-    )
+    list_display = [field.name for field in Recruitment._meta.fields]
     list_filter = ('cycle_type', 'plan_status')
     search_fields = ('recruitment_name',)
 

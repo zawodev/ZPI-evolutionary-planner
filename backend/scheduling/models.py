@@ -24,6 +24,7 @@ class Recruitment(models.Model):
     STATUS_CHOICES = [
         ('archived', 'Archived'),
         ('draft', 'Draft'),
+        ('optimizing', 'Optimizing'),
         ('active', 'Active'),
     ]
 
@@ -33,8 +34,14 @@ class Recruitment(models.Model):
     day_start_time = models.TimeField(blank=True, null=True)
     day_end_time = models.TimeField(blank=True, null=True)
 
-    start_date = models.DateField(blank=True, null=True)
-    end_date = models.DateField(blank=True, null=True)
+    host_prefs_start_date = models.DateField(blank=True, null=True) # zbieranie preferencji hostów
+    user_prefs_start_date = models.DateField(blank=True, null=True) # zbieranie preferencji użytkowników
+    optimization_start_date = models.DateField(blank=True, null=True) # rozpoczęcie optymalizacji
+    optimization_end_date = models.DateField(blank=True, null=True) # zakończenie optymalizacji
+    expiration_date = models.DateField(blank=True, null=True) # data wygaśnięcia rekrutacji
+
+    preference_threshold = models.FloatField(default=0.5)
+    users_submitted_count = models.IntegerField(default=0)
 
     cycle_type = models.CharField(
         max_length=20,
@@ -43,9 +50,8 @@ class Recruitment(models.Model):
         db_column='cycletype'
     )
     plan_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
-    default_token_count = models.IntegerField(default=40)
-    round_count = models.IntegerField(default=1)
-    round_break_length = models.IntegerField(default=0)
+    default_token_count = models.IntegerField(default=3)
+    max_round_execution_time = models.IntegerField(default=300) # in seconds
 
     class Meta:
         db_table = 'scheduling_recruitments'
