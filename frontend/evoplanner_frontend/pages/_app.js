@@ -17,14 +17,16 @@ import "@/styles/components/_header.css";
 import "@/styles/components/_input.css";
 import "@/styles/components/_label.css"
 import "@/styles/components/_padding.css";
+import "@/styles/components/_schedule.css";
+import "@/styles/components/_sidebar.css";
+import "@/styles/components/_slots.css";
 
 // Layout styles
 import "@/styles/layout/_header.css";
 import "@/styles/layout/_hero.css";
 import "@/styles/layout/_login.css";
 import "@/styles/layout/_position.css";
-import "@/styles/layout/_entries.css";
-
+import "@/styles/layout/_schedule_grid.css";
 export default function App({ Component, pageProps }) {
   return (
     <>
