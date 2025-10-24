@@ -106,3 +106,30 @@ class UserRecruitment(models.Model):
 
     def __str__(self):
         return f"{self.user} -> {self.recruitment.recruitment_name}"
+
+
+class UserSubjects(models.Model):
+    """
+    Many to many relationship between Users and Subjects.
+    Defines which subjects each user must complete.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        db_column='userid',
+        related_name='user_subjects'
+    )
+    subject = models.ForeignKey(
+        'scheduling.Subject',
+        on_delete=models.CASCADE,
+        db_column='subjectid',
+        related_name='subject_users'
+    )
+
+    class Meta:
+        db_table = 'identity_usersubjects'
+        unique_together = ('user', 'subject')
+
+    def __str__(self):
+        return f"{self.user} -> {self.subject.subject_name}"
