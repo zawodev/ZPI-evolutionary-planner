@@ -1,11 +1,19 @@
 from django.contrib import admin
-from .models import Subject, Recruitment, Room, Tag, RoomTag, Meeting
+from .models import Subject, SubjectGroup, Recruitment, Room, Tag, RoomTag, Meeting
 
 
 @admin.register(Subject)
 class SubjectAdmin(admin.ModelAdmin):
-    list_display = ('subject_id', 'subject_name')
+    list_display = ('subject_id', 'subject_name', 'duration_blocks', 'duration_minutes')
     search_fields = ('subject_name',)
+
+
+@admin.register(SubjectGroup)
+class SubjectGroupAdmin(admin.ModelAdmin):
+    list_display = ('subject_group_id', 'subject', 'group', 'recruitment')
+    list_filter = ('recruitment', 'subject')
+    search_fields = ('subject__subject_name', 'group__group_name', 'recruitment__recruitment_name')
+    raw_id_fields = ('subject', 'recruitment', 'group')
 
 
 @admin.register(Recruitment)
@@ -38,20 +46,34 @@ class RoomTagAdmin(admin.ModelAdmin):
 class MeetingAdmin(admin.ModelAdmin):
     list_display = (
         'meeting_id',
-        'subject',
-        'group',
+        'get_subject',
+        'get_group',
         'host_user',
         'room',
         'recruitment',
         'day_of_week',
         'start_hour',
-        'end_hour',
+        'get_end_hour',
     )
     list_filter = ('day_of_week', 'recruitment')
     search_fields = (
-        'subject__subject_name',
-        'group__group_name',
+        'subject_group__subject__subject_name',
+        'subject_group__group__group_name',
         'host_user__first_name',
         'host_user__last_name',
     )
-    raw_id_fields = ('recruitment', 'subject', 'room', 'group', 'host_user', 'required_tag')
+    raw_id_fields = ('recruitment', 'subject_group', 'room', 'host_user', 'required_tag')
+    
+    def get_subject(self, obj):
+        return obj.subject_group.subject.subject_name
+    get_subject.short_description = 'Subject'
+    get_subject.admin_order_field = 'subject_group__subject__subject_name'
+    
+    def get_group(self, obj):
+        return obj.subject_group.group.group_name
+    get_group.short_description = 'Group'
+    get_group.admin_order_field = 'subject_group__group__group_name'
+    
+    def get_end_hour(self, obj):
+        return obj.end_hour
+    get_end_hour.short_description = 'End Hour'

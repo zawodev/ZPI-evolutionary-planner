@@ -33,19 +33,19 @@ def convert_preferences_to_problem_data(recruitment_id: str) -> Dict[str, Any]:
     raise NotImplementedError("convert_preferences_to_problem_data not yet implemented")
 
 
-def convert_solution_to_meetings(recruitment_id: str, solution_data: Dict[str, Any]) -> None:
+def convert_solution_to_meetings(job_id: str, solution_data: Dict[str, Any]) -> None:
     """
     Convert optimizer solution (genotype) to Meeting records in SQL database.
     
     Args:
-        recruitment_id: UUID of the recruitment
+        job_id: UUID of the completed optimization job
         solution_data: Solution data containing genotype and fitness
         
     TODO: Implementation needed
     - Parse genotype from solution_data
     - Map genotype to meeting assignments
     - Delete existing meetings for this recruitment
-    - Create new Meeting records
+    - Create Meeting records
     - Update recruitment status to 'active'
     """
     raise NotImplementedError("convert_solution_to_meetings not yet implemented")
@@ -225,12 +225,12 @@ class ProgressListener:
                     
                     # Convert solution to meetings after optimization completes
                     try:
-                        convert_solution_to_meetings(str(job.recruitment_id), solution_data)
-                        logger.info(f"Successfully converted solution to meetings for recruitment {job.recruitment_id}")
+                        convert_solution_to_meetings(str(job.id), solution_data)
+                        logger.info(f"Successfully converted solution to meetings for job {job.id}")
                     except NotImplementedError:
-                        logger.warning(f"convert_solution_to_meetings not yet implemented for recruitment {job.recruitment_id}")
+                        logger.warning(f"convert_solution_to_meetings not yet implemented for job {job.id}")
                     except Exception as e:
-                        logger.error(f"Failed to convert solution to meetings for recruitment {job.recruitment_id}: {e}")
+                        logger.error(f"Failed to convert solution to meetings for job {job.id}: {e}")
                 
                 job.save()
                 

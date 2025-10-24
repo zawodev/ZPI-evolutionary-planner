@@ -7,12 +7,54 @@ import uuid
 class Subject(models.Model):
     subject_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     subject_name = models.CharField(max_length=255)
+    duration_blocks = models.IntegerField(
+        help_text="duration in 15-minute blocks (4 = 1 hour)",
+        default=4
+    )
 
     class Meta:
         db_table = 'scheduling_subjects'
 
     def __str__(self):
         return self.subject_name
+    
+    @property
+    def duration_minutes(self):
+        """Calculate duration in minutes"""
+        return self.duration_blocks * 15
+
+
+class SubjectGroup(models.Model):
+    """
+    Intermediate model between Subject and Meeting.
+    Defines which groups are associated with a subject in a recruitment.
+    """
+    subject_group_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    subject = models.ForeignKey(
+        Subject,
+        on_delete=models.CASCADE,
+        db_column='subjectid',
+        related_name='subject_groups'
+    )
+    recruitment = models.ForeignKey(
+        'Recruitment',
+        on_delete=models.CASCADE,
+        db_column='recruitmentid',
+        related_name='subject_groups'
+    )
+    group = models.ForeignKey(
+        Group,
+        on_delete=models.CASCADE,
+        db_column='groupid',
+        related_name='subject_groups'
+    )
+
+    class Meta:
+        db_table = 'scheduling_subjectgroups'
+        unique_together = ('subject', 'recruitment', 'group')
+
+    def __str__(self):
+        return f"{self.subject.subject_name} - {self.group} (Recruitment: {self.recruitment.recruitment_name})"
 
 
 class Recruitment(models.Model):
@@ -115,22 +157,16 @@ class Meeting(models.Model):
         db_column='recruitmentid',
         related_name='meetings'
     )
-    subject = models.ForeignKey(
-        Subject,
+    subject_group = models.ForeignKey(
+        SubjectGroup,
         on_delete=models.CASCADE,
-        db_column='subjectid',
+        db_column='subjectgroupid',
         related_name='meetings'
     )
     room = models.ForeignKey(
         Room,
         on_delete=models.CASCADE,
         db_column='roomid',
-        related_name='meetings'
-    )
-    group = models.ForeignKey(
-        Group,
-        on_delete=models.CASCADE,
-        db_column='groupid',
         related_name='meetings'
     )
     host_user = models.ForeignKey(
@@ -147,7 +183,6 @@ class Meeting(models.Model):
         null=True
     )
     start_hour = models.IntegerField(help_text="Start hour (0-23)")
-    end_hour = models.IntegerField(help_text="End hour (0-23)")
     day_of_week = models.IntegerField(help_text="Day of week (0=Monday, 6=Sunday)")
     day_of_cycle = models.IntegerField(help_text="Day in cycle: weekly 0-6, biweekly 0-13, monthly 0-30")
 
@@ -155,4 +190,12 @@ class Meeting(models.Model):
         db_table = 'scheduling_meetings'
 
     def __str__(self):
-        return f"Meeting: {self.subject} - {self.group} ({self.day_of_week})"
+        return f"Meeting: {self.subject_group.subject.subject_name} - {self.subject_group.group} ({self.day_of_week})"
+    
+    @property
+    def end_hour(self):
+        """Calculate end hour based on subject duration"""
+        duration_minutes = self.subject_group.subject.duration_minutes
+        start_minutes = self.start_hour * 60
+        end_minutes = start_minutes + duration_minutes
+        return end_minutes // 60

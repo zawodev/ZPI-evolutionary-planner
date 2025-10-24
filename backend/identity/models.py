@@ -81,11 +81,28 @@ class UserGroup(models.Model):
         return f"{self.user} -> {self.group}"
 
 
-# to do:
+class UserRecruitment(models.Model):
+    """
+    Many to many relationship between Users and Recruitments.
+    Defines which users are participating in which recruitments.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        db_column='userid',
+        related_name='user_recruitments'
+    )
+    recruitment = models.ForeignKey(
+        'scheduling.Recruitment',
+        on_delete=models.CASCADE,
+        db_column='recruitmentid',
+        related_name='recruitment_users'
+    )
 
-#class Constraint(models.Model):
-#    pass
+    class Meta:
+        db_table = 'identity_userrecruitments'
+        unique_together = ('user', 'recruitment')
 
-
-#class Preference(models.Model):
-#    pass
+    def __str__(self):
+        return f"{self.user} -> {self.recruitment.recruitment_name}"
