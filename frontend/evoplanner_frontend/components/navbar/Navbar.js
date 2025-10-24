@@ -10,7 +10,9 @@ export default function Navbar() {
         <Link href="/">
           <button className="header-nav nav-home">Strona główna</button>
         </Link>
-        <button className="header-nav nav-func">Funkcjonalności</button>
+        <Link href="/admin/login">
+          <button className="header-nav nav-func">OptiSlots dla firm</button>
+        </Link>
         <button className="header-nav nav-contact">Kontakt</button>
       </nav>
       

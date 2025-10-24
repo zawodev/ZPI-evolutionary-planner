@@ -1,7 +1,10 @@
+import Navbar from "@/components/navbar/Navbar";
+
 export default function Home() {
     return (
         <>
             <div className="login-background">
+                <Navbar/>
                 <section>
                     <div>
                         <h1 className="hero-title font-black">

@@ -12,17 +12,23 @@ export default function LoginPage() {
     
     // TODO: Replace with actual API call
     try {
-      // const response = await fetch('/api/login', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ login, password })
-      // });
-      // if (response.ok) {
-      //   window.location.href = "/dashboard";
-      // }
-      
-      console.log("Logging in with:", login, password);
-      window.location.href = "/check";
+       const response = await fetch('http://localhost:8000/api/v1/identity/login/', {
+         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({ username:login, password:password })
+       });
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('accessToken', data.access);
+        localStorage.setItem('refreshToken',data.refresh)
+        if (data.user?.role === 'office')
+        {
+          window.location.href = "/admin/users";
+        } else {
+          window.location.href = "/check";
+        }
+        console.log("Logging in with:", login, password);
+      }
     } catch (error) {
       console.error("Login failed:", error);
     }
@@ -50,10 +56,10 @@ export default function LoginPage() {
           
           <form onSubmit={handleLogin}>
             <div className="login-input-wrapper" style={{ marginTop: '60px' }}>
-              <p className="info-text">Adres e-mail</p>
+              <p className="info-text">Nazwa użytkownika</p>
               <input
-                type="email"
-                placeholder="imienazwisko@email.com"
+                type="text"
+                placeholder="uzytkownik 123"
                 value={login}
                 onChange={(e) => setLogin(e.target.value)}
                 className="input input--login"
