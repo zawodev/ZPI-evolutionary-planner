@@ -54,21 +54,29 @@ def should_start_optimization(recruitment):
 
 def trigger_optimization(recruitment):
     """trigger optimization for recruitment"""
-    from optimizer.services import OptimizerService
+    from optimizer.services import OptimizerService, convert_preferences_to_problem_data
     
     with transaction.atomic():
         recruitment.plan_status = 'optimizing'
         recruitment.save()
         logger.info(f"started optimization for recruitment {recruitment.recruitment_id}")
         
-        # TODO: build complete problem_data from recruitment preferences
-        # parse constraints, user preferences, management preferences
-        # and build proper problem_data structure
-        problem_data = {}
+        # Convert preferences to problem_data
+        try:
+            problem_data = convert_preferences_to_problem_data(str(recruitment.recruitment_id))
+        except NotImplementedError:
+            logger.warning(f"convert_preferences_to_problem_data not yet implemented, using empty problem_data")
+            problem_data = {}
+        except Exception as e:
+            logger.error(f"failed to convert preferences to problem_data: {e}")
+            recruitment.plan_status = 'draft'
+            recruitment.save()
+            raise
         
         try:
             optimizer_service = OptimizerService()
             job = optimizer_service.submit_job({
+                'recruitment_id': str(recruitment.recruitment_id),
                 'max_execution_time': recruitment.max_round_execution_time,
                 'problem_data': problem_data
             })
