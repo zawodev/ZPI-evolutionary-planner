@@ -6,25 +6,45 @@ import Image from "next/image";
 export default function LoginPage() {
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
+    setIsLoading(true);
     
-    // TODO: Replace with actual API call
     try {
-      // const response = await fetch('/api/login', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ login, password })
-      // });
-      // if (response.ok) {
-      //   window.location.href = "/dashboard";
-      // }
+      const response = await fetch('http://127.0.0.1:8000/api/v1/identity/login/', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          username: login, 
+          password: password 
+        })
+      });
+
+      const data = await response.json();
       
-      console.log("Logging in with:", login, password);
-      window.location.href = "/check";
+      if (response.ok) {
+        if (data.access) {
+          localStorage.setItem('access_token', data.access);
+        }
+        if (data.refresh) {
+          localStorage.setItem('refresh_token', data.refresh);
+        }
+        
+        window.location.href = "/entries";
+      } else {
+        setError(data.message || data.detail || "Nieprawidłowy login lub hasło");
+      }
     } catch (error) {
       console.error("Login failed:", error);
+      setError("Błąd połączenia z serwerem. Spróbuj ponownie.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -49,15 +69,31 @@ export default function LoginPage() {
           </strong>
           
           <form onSubmit={handleLogin}>
+            {error && (
+              <div style={{
+                backgroundColor: '#fee',
+                border: '1px solid #fcc',
+                borderRadius: '4px',
+                padding: '12px',
+                marginBottom: '16px',
+                color: '#c33',
+                fontSize: '14px',
+                textAlign: 'center'
+              }}>
+                {error}
+              </div>
+            )}
+
             <div className="login-input-wrapper" style={{ marginTop: '60px' }}>
-              <p className="info-text">Adres e-mail</p>
+              <p className="info-text">Adres e-mail lub login</p>
               <input
-                type="email"
+                type="text"
                 placeholder="imienazwisko@email.com"
                 value={login}
                 onChange={(e) => setLogin(e.target.value)}
                 className="input input--login"
                 required
+                disabled={isLoading}
               />
             </div>
 
@@ -70,16 +106,18 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="input input--login"
                 required
+                disabled={isLoading}
               />
             </div>
 
             <div className="login-button-wrapper">
-              <Link href='/entries'>
-                {/* TODO: Later on change the type to submit when backend is ready */}
-                <button type="button" className="btn btn--primary btn--form">
-                  Zaloguj
-                </button>
-              </Link>
+              <button 
+                type="submit" 
+                className="btn btn--primary btn--form"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Logowanie...' : 'Zaloguj'}
+              </button>
             </div>
 
             <div style={{ textAlign: 'center', margin: '24px 0' }}>
@@ -93,6 +131,7 @@ export default function LoginPage() {
                 type="button"
                 onClick={goToRegister}
                 className="btn btn--secondary btn--form"
+                disabled={isLoading}
                 style={{ 
                   position: 'relative',
                   display: 'flex', 
@@ -122,19 +161,11 @@ export default function LoginPage() {
                 type="button"
                 onClick={goToRegister}
                 className="btn btn--secondary btn--form"
+                disabled={isLoading}
               >
                 USOS
               </button>
             </div>
-
-            {/* <div style={{ textAlign: 'center', marginTop: '24px' }}>
-              <p className="info-text">
-                Nie masz konta?{' '}
-                <Link href="/register" style={{ color: '#2163ff', fontWeight: 500 }}>
-                  Zarejestruj się
-                </Link>
-              </p>
-            </div> */}
           </form>
         </div>
       </div>

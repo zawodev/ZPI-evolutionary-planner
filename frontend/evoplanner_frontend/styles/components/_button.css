@@ -74,13 +74,21 @@
 
 /* Button in neutral/grey color */
 .btn--neutral {
-  background-color: '#f3f4f6';
-  color: '#374151';
-  border: '2px solid #e5e7eb';
+  background-color: #f9fafb;
+  color: #1f2937;
+  border: 2px solid #d1d5db;
+  transition: all 0.2s ease;
 }
 
 .btn--neutral:hover {
-  background-color: '#e5e7eb';
+  background-color: #e5e7eb;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.btn--neutral:active {
+  background-color: #d1d5db;
+  transform: translateY(0);
 }
 
 .btn--form {

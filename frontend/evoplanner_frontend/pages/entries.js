@@ -617,8 +617,15 @@ export default function EntriesPage() {
                 </div>
 
                 <div>
-                  <label className="label soft-blue">
-                    Punkty priorytetu: {pendingSlot?.priority}
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: '8px', 
+                    fontSize: '13px', 
+                    fontWeight: '600',
+                    color: '#374151',
+                    fontFamily: "'DM Sans', sans-serif"
+                  }}>
+                    Punkty priorytetu: {editingSlot?.priority}
                   </label>
                   <input
                     type="range"
