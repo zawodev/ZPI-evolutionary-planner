@@ -13,6 +13,7 @@ class SubjectSerializer(serializers.ModelSerializer):
 class SubjectGroupSerializer(serializers.ModelSerializer):
     subject_name = serializers.CharField(source='subject.subject_name', read_only=True)
     group_name = serializers.CharField(source='group.group_name', read_only=True)
+    host_user_username = serializers.CharField(source='host_user.username', read_only=True)
     recruitment_name = serializers.CharField(source='recruitment.recruitment_name', read_only=True)
     
     class Meta:
@@ -46,6 +47,8 @@ class RoomTagSerializer(serializers.ModelSerializer):
 
 class MeetingSerializer(serializers.ModelSerializer):
     end_hour = serializers.ReadOnlyField()
+    host_user = serializers.ReadOnlyField(source='subject_group.host_user.id')
+    host_user_username = serializers.ReadOnlyField(source='subject_group.host_user.username')
     subject_name = serializers.CharField(source='subject_group.subject.subject_name', read_only=True)
     group_name = serializers.CharField(source='subject_group.group.group_name', read_only=True)
     

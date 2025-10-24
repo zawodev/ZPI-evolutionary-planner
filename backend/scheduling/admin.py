@@ -10,10 +10,10 @@ class SubjectAdmin(admin.ModelAdmin):
 
 @admin.register(SubjectGroup)
 class SubjectGroupAdmin(admin.ModelAdmin):
-    list_display = ('subject_group_id', 'subject', 'group', 'recruitment')
-    list_filter = ('recruitment', 'subject')
-    search_fields = ('subject__subject_name', 'group__group_name', 'recruitment__recruitment_name')
-    raw_id_fields = ('subject', 'recruitment', 'group')
+    list_display = ('subject_group_id', 'subject', 'group', 'host_user', 'recruitment')
+    list_filter = ('recruitment', 'subject', 'host_user')
+    search_fields = ('subject__subject_name', 'group__group_name', 'host_user__username', 'recruitment__recruitment_name')
+    raw_id_fields = ('subject', 'recruitment', 'group', 'host_user')
 
 
 @admin.register(Recruitment)
@@ -48,7 +48,7 @@ class MeetingAdmin(admin.ModelAdmin):
         'meeting_id',
         'get_subject',
         'get_group',
-        'host_user',
+        'get_host_user',
         'room',
         'recruitment',
         'day_of_week',
@@ -59,10 +59,10 @@ class MeetingAdmin(admin.ModelAdmin):
     search_fields = (
         'subject_group__subject__subject_name',
         'subject_group__group__group_name',
-        'host_user__first_name',
-        'host_user__last_name',
+        'subject_group__host_user__first_name',
+        'subject_group__host_user__last_name',
     )
-    raw_id_fields = ('recruitment', 'subject_group', 'room', 'host_user', 'required_tag')
+    raw_id_fields = ('recruitment', 'subject_group', 'room', 'required_tag')
     
     def get_subject(self, obj):
         return obj.subject_group.subject.subject_name
@@ -73,6 +73,11 @@ class MeetingAdmin(admin.ModelAdmin):
         return obj.subject_group.group.group_name
     get_group.short_description = 'Group'
     get_group.admin_order_field = 'subject_group__group__group_name'
+    
+    def get_host_user(self, obj):
+        return obj.subject_group.host_user.username
+    get_host_user.short_description = 'Host User'
+    get_host_user.admin_order_field = 'subject_group__host_user__username'
     
     def get_end_hour(self, obj):
         return obj.end_hour

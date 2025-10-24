@@ -18,7 +18,7 @@ def get_active_meetings_for_room(room_or_id: Union[Room, str, int]) -> QuerySet:
     qs = (
         Meeting.objects
         .filter(room_id=room_id, recruitment__plan_status='active')
-        .select_related('recruitment', 'subject_group__subject', 'subject_group__group', 'room', 'host_user', 'required_tag')
+        .select_related('recruitment', 'subject_group__subject', 'subject_group__group', 'subject_group__host_user', 'room', 'required_tag')
         .order_by('day_of_week', 'start_hour')
     )
     return qs

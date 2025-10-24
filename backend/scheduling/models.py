@@ -48,13 +48,19 @@ class SubjectGroup(models.Model):
         db_column='groupid',
         related_name='subject_groups'
     )
+    host_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        db_column='hostuserid',
+        related_name='hosted_subject_groups'
+    )
 
     class Meta:
         db_table = 'scheduling_subjectgroups'
         unique_together = ('subject', 'recruitment', 'group')
 
     def __str__(self):
-        return f"{self.subject.subject_name} - {self.group} (Recruitment: {self.recruitment.recruitment_name})"
+        return f"{self.subject.subject_name} - {self.group} - {self.host_user} (Recruitment: {self.recruitment.recruitment_name})"
 
 
 class Recruitment(models.Model):
@@ -169,12 +175,6 @@ class Meeting(models.Model):
         db_column='roomid',
         related_name='meetings'
     )
-    host_user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        db_column='teacherid',
-        related_name='taught_meetings'
-    )
     required_tag = models.ForeignKey(
         Tag,
         on_delete=models.CASCADE,
@@ -190,7 +190,7 @@ class Meeting(models.Model):
         db_table = 'scheduling_meetings'
 
     def __str__(self):
-        return f"Meeting: {self.subject_group.subject.subject_name} - {self.subject_group.group} ({self.day_of_week})"
+        return f"Meeting: {self.subject_group.subject.subject_name} - {self.subject_group.group} - {self.subject_group.host_user} ({self.day_of_week})"
     
     @property
     def end_hour(self):
@@ -199,3 +199,8 @@ class Meeting(models.Model):
         start_minutes = self.start_hour * 60
         end_minutes = start_minutes + duration_minutes
         return end_minutes // 60
+    
+    @property
+    def host_user(self):
+        """Access host_user through subject_group"""
+        return self.subject_group.host_user
