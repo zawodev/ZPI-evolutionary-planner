@@ -31,16 +31,16 @@ def get_active_meetings_for_user(user_or_id: Union[User, int, str]) -> QuerySet:
 
 def get_recruitments_for_user(user_or_id: Union[User, int, str], active_only: bool = False) -> QuerySet:
     """
-    Zwraca QuerySet obiektów Recruitment, w których dany użytkownik jest uczestnikiem.
+    Return a QuerySet of Recruitment objects in which the given user is a participant.
 
-    Definicja "uczestnik": użytkownik należy do co najmniej jednej Group, która ma
-    Meeting w danym Recruitment.
+    Definition of "participant": the user belongs to at least one Group that has
+    a Meeting in the given Recruitment.
 
-    Parametry:
-    - user_or_id: User instance lub PK (UUID/string).
-    - active_only: gdy True, filtruje tylko recruitmenty z plan_status == 'active'.
+    Parameters:
+    - user_or_id: User instance or primary key (UUID/string).
+    - active_only: when True, filter only recruitments with plan_status == 'active'.
 
-    Zwraca: QuerySet[Recruitment] (unikatowe rekordy).
+    Returns: QuerySet[Recruitment] containing unique Recruitment records.
     """
     user_id = user_or_id.pk if hasattr(user_or_id, 'pk') else user_or_id
 

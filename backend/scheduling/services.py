@@ -25,14 +25,14 @@ def get_active_meetings_for_room(room_or_id: Union[Room, str, int]) -> QuerySet:
 
 def get_users_for_recruitment(recruitment_or_id: Union[Recruitment, str, int], active_only: bool = False) -> QuerySet:
     """
-    Zwraca QuerySet wszystkich użytkowników, którzy należą do grup, które mają Meetingi
-    w podanej rekrutacji.
+    Return a QuerySet of all users who belong to groups that have Meetings
+    in the specified Recruitment.
 
-    Parametry:
-    - recruitment_or_id: Recruitment instance lub recruitment PK (recruitment_id).
-    - active_only: jeśli True, uwzględnia tylko meetingi, których recruitment ma plan_status == 'active'.
+    Parameters:
+    - recruitment_or_id: a Recruitment instance or the recruitment's primary key (recruitment_id).
+    - active_only: if True, include only meetings whose recruitment has plan_status == 'active'.
 
-    Przykładowe użycie:
+    Usage examples:
     get_users_for_recruitment(recruitment_instance)
     get_users_for_recruitment(recruitment_id, active_only=True)
     """
