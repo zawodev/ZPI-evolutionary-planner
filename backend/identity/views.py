@@ -8,7 +8,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import (
     RegisterSerializer, UserSerializer, OrganizationSerializer, GroupSerializer, UserGroupSerializer, OfficeCreateUserSerializer, PasswordChangeSerializer
 )
-from .services import get_active_meetings_for_user
+from .services import get_active_meetings_for_user, get_recruitments_for_user
 from .permissions import IsAdminUser, IsOfficeUser
 
 User = get_user_model()
@@ -187,4 +187,22 @@ class ActiveMeetingsByUserView(APIView):
         from scheduling.serializers import MeetingSerializer
         qs = get_active_meetings_for_user(user_pk)
         serializer = MeetingSerializer(qs, many=True)
+        return Response(serializer.data)
+
+
+class RecruitmentsByUserView(APIView):
+    """Return all recruitments where the given user is a participant via groups that have meetings in those recruitments.
+
+    Optional query parameter:
+    - active=true|false (default false) — when true, only recruitments with plan_status='active' are returned.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, user_pk):
+        get_object_or_404(User, pk=user_pk)
+        active_q = request.query_params.get('active', 'false').lower()
+        active_only = active_q in ('1', 'true', 'yes')
+        from scheduling.serializers import RecruitmentSerializer
+        qs = get_recruitments_for_user(user_pk, active_only=active_only)
+        serializer = RecruitmentSerializer(qs, many=True)
         return Response(serializer.data)
