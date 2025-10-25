@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import (
     SubjectView,
+    SubjectGroupView,
     RecruitmentView,
     RoomView,
     TagView,
@@ -13,6 +14,9 @@ from .views import (
 urlpatterns = [
     path('subjects/', SubjectView.as_view(), name='subjects'),
     path('subjects/<uuid:pk>/', SubjectView.as_view(), name='subject-detail'),
+
+    path('subject-groups/', SubjectGroupView.as_view(), name='subject-groups'),
+    path('subject-groups/<uuid:pk>/', SubjectGroupView.as_view(), name='subject-group-detail'),
 
     path('recruitments/', RecruitmentView.as_view(), name='recruitments'),
     path('recruitments/<uuid:pk>/', RecruitmentView.as_view(), name='recruitment-detail'),

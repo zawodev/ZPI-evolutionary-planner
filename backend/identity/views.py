@@ -3,10 +3,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from .models import Organization, Group, UserGroup
+from .models import Organization, Group, UserGroup, UserRecruitment
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import (
-    RegisterSerializer, UserSerializer, OrganizationSerializer, GroupSerializer, UserGroupSerializer, OfficeCreateUserSerializer, PasswordChangeSerializer
+    RegisterSerializer, UserSerializer, OrganizationSerializer, GroupSerializer, UserGroupSerializer,
+    UserRecruitmentSerializer, OfficeCreateUserSerializer, PasswordChangeSerializer
 )
 from .services import get_active_meetings_for_user, get_recruitments_for_user
 from .permissions import IsAdminUser, IsOfficeUser
@@ -188,6 +189,41 @@ class ActiveMeetingsByUserView(APIView):
         qs = get_active_meetings_for_user(user_pk)
         serializer = MeetingSerializer(qs, many=True)
         return Response(serializer.data)
+
+
+class UserRecruitmentAddView(APIView):
+    """Add a user to a recruitment"""
+    permission_classes = [permissions.IsAuthenticated, IsOfficeUser]
+
+    def post(self, request):
+        serializer = UserRecruitmentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserRecruitmentDeleteView(APIView):
+    """Remove a user from a recruitment"""
+    permission_classes = [permissions.IsAuthenticated, IsOfficeUser]
+
+    def delete(self, request):
+        user_id = request.data.get('user')
+        recruitment_id = request.data.get('recruitment')
+
+        if not user_id or not recruitment_id:
+            return Response(
+                {"detail": "Both user and recruitment are required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user_recruitment = get_object_or_404(
+            UserRecruitment,
+            user_id=user_id,
+            recruitment_id=recruitment_id
+        )
+        user_recruitment.delete()
+        return Response({"detail": "User removed from recruitment"}, status=status.HTTP_204_NO_CONTENT)
 
 
 class RecruitmentsByUserView(APIView):

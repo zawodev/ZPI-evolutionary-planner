@@ -4,11 +4,12 @@ from rest_framework import status, permissions
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 
-from .models import Subject, Recruitment, Room, Tag, RoomTag, Meeting
+from .models import Subject, SubjectGroup, Recruitment, Room, Tag, RoomTag, Meeting
 from identity.permissions import IsOfficeUser
 
 from .serializers import (
     SubjectSerializer,
+    SubjectGroupSerializer,
     RecruitmentSerializer,
     RoomSerializer,
     TagSerializer,
@@ -66,6 +67,12 @@ class SubjectView(BaseCrudView):
     model = Subject
     serializer_class = SubjectSerializer
     lookup_field = 'subject_id'
+
+
+class SubjectGroupView(BaseCrudView):
+    model = SubjectGroup
+    serializer_class = SubjectGroupSerializer
+    lookup_field = 'subject_group_id'
 
 
 class RecruitmentView(BaseCrudView):
