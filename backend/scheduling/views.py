@@ -16,7 +16,7 @@ from .serializers import (
     RoomTagSerializer,
     MeetingSerializer
 )
-from .services import get_active_meetings_for_room
+from .services import get_active_meetings_for_room, get_users_for_recruitment
 
 
 class BaseCrudView(APIView):
@@ -117,3 +117,20 @@ class ActiveMeetingsByRoomView(APIView):
         serializer = MeetingSerializer(qs, many=True)
         return Response(serializer.data)
 
+
+class UsersByRecruitmentView(APIView):
+    """Return all users who belong to groups that have meetings in the given recruitment.
+
+    Optional query parameter:
+    - active=true|false (default false) — when true, only users from recruitments with plan_status='active' are returned.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, recruitment_pk):
+        get_object_or_404(Recruitment, **{'recruitment_id': recruitment_pk})
+        active_q = request.query_params.get('active', 'false').lower()
+        active_only = active_q in ('1', 'true', 'yes')
+        qs = get_users_for_recruitment(recruitment_pk, active_only=active_only)
+        from identity.serializers import UserSerializer
+        serializer = UserSerializer(qs, many=True)
+        return Response(serializer.data)

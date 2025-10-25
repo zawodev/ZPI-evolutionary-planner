@@ -33,3 +33,7 @@
 /media/
 /static_collected/
 db.sqlite3
+
+# Django migrations (ignore all migrations folders and their contents)
+**/migrations/
+**/migrations/**

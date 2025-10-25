@@ -8,6 +8,7 @@ from .views import (
     RoomTagView,
     MeetingView,
     ActiveMeetingsByRoomView,
+    UsersByRecruitmentView,
 )
 
 urlpatterns = [
@@ -19,6 +20,7 @@ urlpatterns = [
 
     path('recruitments/', RecruitmentView.as_view(), name='recruitments'),
     path('recruitments/<uuid:pk>/', RecruitmentView.as_view(), name='recruitment-detail'),
+    path('recruitments/<uuid:recruitment_pk>/users/', UsersByRecruitmentView.as_view(), name='recruitment-users'),
 
     path('rooms/', RoomView.as_view(), name='rooms'),
     path('rooms/<uuid:pk>/', RoomView.as_view(), name='room-detail'),
