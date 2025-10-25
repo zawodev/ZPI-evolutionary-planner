@@ -116,12 +116,13 @@ def archive_expired_recruitments():
 
 def get_users_for_recruitment(recruitment_or_id: Union[Recruitment, str, int], active_only: bool = False) -> QuerySet:
     """
-    Return a QuerySet of all users who belong to groups that have Meetings
-    in the specified Recruitment.
+    Return a QuerySet of all users who are linked to the specified Recruitment via the
+    UserRecruitment table (related_name='user_recruitments'). This replaces the previous
+    implementation which traversed user_groups.
 
     Parameters:
     - recruitment_or_id: a Recruitment instance or the recruitment's primary key (recruitment_id).
-    - active_only: if True, include only meetings whose recruitment has plan_status == 'active'.
+    - active_only: if True, include only users whose linked recruitment has plan_status == 'active'.
 
     Usage examples:
     get_users_for_recruitment(recruitment_instance)
@@ -130,10 +131,10 @@ def get_users_for_recruitment(recruitment_or_id: Union[Recruitment, str, int], a
     recruitment_id = recruitment_or_id.recruitment_id if hasattr(recruitment_or_id, 'recruitment_id') else recruitment_or_id
 
     filters = {
-        'user_groups__group__meetings__recruitment_id': recruitment_id
+        'user_recruitments__recruitment__recruitment_id': recruitment_id
     }
     if active_only:
-        filters['user_groups__group__meetings__recruitment__plan_status'] = 'active'
+        filters['user_recruitments__recruitment__plan_status'] = 'active'
 
     qs = (
         User.objects

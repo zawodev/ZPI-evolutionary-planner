@@ -33,8 +33,9 @@ def get_recruitments_for_user(user_or_id: Union[User, int, str], active_only: bo
     """
     Return a QuerySet of Recruitment objects in which the given user is a participant.
 
-    Definition of "participant": the user belongs to at least one Group that has
-    a Meeting in the given Recruitment.
+    Uses the `UserRecruitment` table (reverse relation `recruitment_users`) to determine
+    membership: a user is a participant if there exists a UserRecruitment row linking them
+    to the Recruitment.
 
     Parameters:
     - user_or_id: User instance or primary key (UUID/string).
@@ -45,7 +46,7 @@ def get_recruitments_for_user(user_or_id: Union[User, int, str], active_only: bo
     user_id = user_or_id.pk if hasattr(user_or_id, 'pk') else user_or_id
 
     filters = {
-        'meetings__group__group_users__user_id': user_id
+        'recruitment_users__user_id': user_id
     }
     if active_only:
         filters['plan_status'] = 'active'
@@ -53,7 +54,7 @@ def get_recruitments_for_user(user_or_id: Union[User, int, str], active_only: bo
     qs = (
         Recruitment.objects
         .filter(**filters)
-        .prefetch_related('meetings', 'meetings__group')
+        .prefetch_related('meetings', 'recruitment_users', 'recruitment_users__user')
         .order_by('recruitment_name')
         .distinct()
     )
