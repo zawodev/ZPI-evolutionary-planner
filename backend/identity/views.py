@@ -6,10 +6,10 @@ from django.shortcuts import get_object_or_404
 from .models import Organization, Group, UserGroup, UserRecruitment
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import (
-    RegisterSerializer, UserSerializer, OrganizationSerializer, GroupSerializer, UserGroupSerializer, 
+    RegisterSerializer, UserSerializer, OrganizationSerializer, GroupSerializer, UserGroupSerializer,
     UserRecruitmentSerializer, OfficeCreateUserSerializer, PasswordChangeSerializer
 )
-from .services import get_active_meetings_for_user
+from .services import get_active_meetings_for_user, get_recruitments_for_user
 from .permissions import IsAdminUser, IsOfficeUser
 import secrets
 from django.conf import settings
@@ -308,13 +308,13 @@ class UserRecruitmentDeleteView(APIView):
     def delete(self, request):
         user_id = request.data.get('user')
         recruitment_id = request.data.get('recruitment')
-        
+
         if not user_id or not recruitment_id:
             return Response(
                 {"detail": "Both user and recruitment are required"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         user_recruitment = get_object_or_404(
             UserRecruitment,
             user_id=user_id,
@@ -322,6 +322,25 @@ class UserRecruitmentDeleteView(APIView):
         )
         user_recruitment.delete()
         return Response({"detail": "User removed from recruitment"}, status=status.HTTP_204_NO_CONTENT)
+
+
+class RecruitmentsByUserView(APIView):
+    """Return all recruitments where the given user is a participant via groups that have meetings in those recruitments.
+
+    Optional query parameter:
+    - active=true|false (default false) — when true, only recruitments with plan_status='active' are returned.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, user_pk):
+        get_object_or_404(User, pk=user_pk)
+        active_q = request.query_params.get('active', 'false').lower()
+        active_only = active_q in ('1', 'true', 'yes')
+        from scheduling.serializers import RecruitmentSerializer
+        qs = get_recruitments_for_user(user_pk, active_only=active_only)
+        serializer = RecruitmentSerializer(qs, many=True)
+        return Response(serializer.data)
+
 
 
 class OrganizationUsersView(APIView):
