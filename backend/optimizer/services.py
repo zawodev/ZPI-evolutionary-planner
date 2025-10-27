@@ -22,15 +22,110 @@ def convert_preferences_to_problem_data(recruitment_id: str) -> Dict[str, Any]:
         
     Returns:
         Dict containing problem_data in the format expected by the optimizer
-        
-    TODO: Implementation needed
-    - Fetch recruitment data
-    - Parse user preferences
-    - Parse management preferences
-    - Parse constraints
-    - Build problem_data structure
     """
-    raise NotImplementedError("convert_preferences_to_problem_data not yet implemented")
+    from scheduling.models import Recruitment
+    from preferences.models import UserPreferences, Constraints, ManagementPreferences
+    from identity.models import UserRecruitment
+    
+    try:
+        # get recruitment
+        recruitment = Recruitment.objects.get(recruitment_id=recruitment_id)
+
+        # get constraints (should be one per recruitment)
+        try:
+            constraints = Constraints.objects.get(recruitment_id=recruitment_id)
+            constraints_data = constraints.constraints_data
+        except Constraints.DoesNotExist:
+            logger.error(f"No constraints found for recruitment {recruitment_id}")
+            raise ValueError(f"No constraints found for recruitment {recruitment_id}")
+        
+        # get management preferences (should be one per recruitment)
+        try:
+            management_prefs = ManagementPreferences.objects.get(recruitment_id=recruitment_id)
+            management_data = management_prefs.preferences_data
+        except ManagementPreferences.DoesNotExist:
+            logger.error(f"No management preferences found for recruitment {recruitment_id}")
+            raise ValueError(f"No management preferences found for recruitment {recruitment_id}")
+        
+        # get all users in this recruitment
+        user_recruitments = UserRecruitment.objects.filter(
+            recruitment_id=recruitment_id
+        ).select_related('user').order_by('user_id')
+        
+        students_preferences = []
+        teachers_preferences = []
+        
+        # process each user based on their role
+        for user_recruitment in user_recruitments:
+            user = user_recruitment.user
+            
+            # skip users that are not participants or hosts
+            if user.role not in ['participant', 'host']:
+                continue
+            
+            # get user preferences
+            try:
+                user_prefs = UserPreferences.objects.get(
+                    recruitment_id=recruitment_id,
+                    user_id=user.id
+                )
+                prefs_data = user_prefs.preferences_data
+                
+                # extract preference fields
+                width_height_info = prefs_data.get('WidthHeightInfo', 0)
+                gaps_info = prefs_data.get('GapsInfo', [0, 0, 0])
+                preferred_timeslots = prefs_data.get('PreferredTimeslots', [])
+                preferred_groups = prefs_data.get('PreferredGroups', [])
+                
+                if user.role == 'participant':
+                    # students: [WidthHeightInfo, GapsInfo, PreferredTimeslots, PreferredGroups]
+                    student_pref = [
+                        width_height_info,
+                        gaps_info,
+                        preferred_timeslots,
+                        preferred_groups
+                    ]
+                    students_preferences.append(student_pref)
+                    
+                elif user.role == 'host':
+                    # teachers: [WidthHeightInfo, GapsInfo, PreferredTimeslots]
+                    # without PreferredGroups
+                    teacher_pref = [
+                        width_height_info,
+                        gaps_info,
+                        preferred_timeslots
+                    ]
+                    teachers_preferences.append(teacher_pref)
+                    
+            except UserPreferences.DoesNotExist:
+                logger.warning(f"No preferences found for user {user.id} in recruitment {recruitment_id}")
+                # default preferences based on role
+                if user.role == 'participant':
+                    students_preferences.append([0, [0, 0, 0], [], []])
+                elif user.role == 'host':
+                    teachers_preferences.append([0, [0, 0, 0], []])
+        
+        # build problem_data structure
+        problem_data = {
+            "constraints": constraints_data,
+            "preferences": {
+                "management": management_data,
+                "students": students_preferences,
+                "teachers": teachers_preferences
+            }
+        }
+        
+        logger.info(f"Successfully converted preferences to problem_data for recruitment {recruitment_id}")
+        logger.info(f"Students count: {len(students_preferences)}, Teachers count: {len(teachers_preferences)}")
+        
+        return problem_data
+        
+    except Recruitment.DoesNotExist:
+        logger.error(f"Recruitment {recruitment_id} not found")
+        raise ValueError(f"Recruitment {recruitment_id} not found")
+    except Exception as e:
+        logger.error(f"Error converting preferences to problem_data for recruitment {recruitment_id}: {e}")
+        raise
 
 
 def convert_solution_to_meetings(job_id: str) -> None:
