@@ -70,6 +70,12 @@ def convert_solution_to_meetings(job_id: str) -> None:
         recruitment = job.recruitment
         recruitment_id = recruitment.recruitment_id
         
+        # Get organization from recruitment
+        organization = recruitment.organization
+        if not organization:
+            logger.error(f"No organization found for recruitment {recruitment_id}")
+            return
+        
         # Get constraints to understand the schedule structure
         try:
             constraints = Constraints.objects.get(recruitment_id=recruitment_id)
@@ -156,11 +162,16 @@ def convert_solution_to_meetings(job_id: str) -> None:
                 # Group name format: "Meeting_<recruitment_name>_<subject_name>_<group_idx>"
                 group_name = f"Meeting_{recruitment.recruitment_name}_{subject_group.subject.subject_name}_{group_idx}"
                 
+                logger.info(f"Creating identity group with name: {group_name}")
+
                 identity_group = Group.objects.create(
                     group_name=group_name,
                     category='meeting',
-                    organization=recruitment.recruitment_users.first().user.organization if recruitment.recruitment_users.exists() else None
+                    organization=organization
                 )
+
+                logger.info(f"Created identity group {identity_group.group_id}")
+                logger.info(f"Identity group details: {identity_group}")
                 
                 # Find students assigned to this subject group from by_student
                 students_in_group = []

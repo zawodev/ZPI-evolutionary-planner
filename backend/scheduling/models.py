@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from identity.models import User, Group
+from identity.models import User, Group, Organization
 import uuid
 
 
@@ -53,7 +53,7 @@ class SubjectGroup(models.Model):
         db_table = 'scheduling_subjectgroups'
 
     def __str__(self):
-        return f"{self.subject.subject_name} - {self.group} - {self.host_user} (Recruitment: {self.recruitment.recruitment_name})"
+        return f"{self.subject.subject_name} - {self.host_user} (Recruitment: {self.recruitment.recruitment_name})"
 
 
 class Recruitment(models.Model):
@@ -71,6 +71,12 @@ class Recruitment(models.Model):
 
     recruitment_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     recruitment_name = models.CharField(max_length=255)
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        db_column='organizationid',
+        related_name='recruitments'
+    )
 
     day_start_time = models.TimeField(blank=True, null=True)
     day_end_time = models.TimeField(blank=True, null=True)
