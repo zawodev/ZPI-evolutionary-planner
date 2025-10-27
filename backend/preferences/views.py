@@ -11,8 +11,8 @@ import uuid
 
 
 DEFAULT_USER_PREFERENCES = {
-    "GapsInfo": [0, 0, 0], # minGaps, maxGaps, weight
     "WidthHeightInfo": 0, # weight, positive means prefer wider, negative means prefer taller
+    "GapsInfo": [0, 0, 0], # minGaps, maxGaps, weight
     "PreferredTimeslots": [0, 0, 0, 0, 0], # for each timeslot in cycle, weight
     "PreferredGroups": [0, 0, 0, 0, 0] # for each group, weight
 }
