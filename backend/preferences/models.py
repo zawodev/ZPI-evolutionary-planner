@@ -18,7 +18,8 @@ class UserPreferences(models.Model):
         db_column='recruitmentid',
         related_name='user_preferences'
     )
-    preferences_data = models.JSONField(default=dict)
+    # preferences_data structure can be viewed in views.py
+    preferences_data = models.JSONField(default=dict) 
 
     class Meta:
         db_table = 'preferences_user_preferences'
@@ -36,6 +37,7 @@ class Constraints(models.Model):
         db_column='recruitmentid',
         related_name='constraints'
     )
+    # constraints_data structure can be viewed in views.py
     constraints_data = models.JSONField(default=dict)
 
     class Meta:
@@ -53,6 +55,7 @@ class ManagementPreferences(models.Model):
         db_column='recruitmentid',
         related_name='management_preferences'
     )
+    # preferences_data structure can be viewed in views.py
     preferences_data = models.JSONField(default=dict)
 
     class Meta:
