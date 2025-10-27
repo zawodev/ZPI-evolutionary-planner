@@ -66,6 +66,7 @@ def trigger_optimization(recruitment):
         # Convert preferences to problem_data
         try:
             problem_data = convert_preferences_to_problem_data(str(recruitment.recruitment_id))
+            logger.info(f"converted preferences to problem_data for recruitment {recruitment.recruitment_id}")
         except NotImplementedError:
             logger.warning(f"convert_preferences_to_problem_data not yet implemented, using empty problem_data")
             problem_data = {}
