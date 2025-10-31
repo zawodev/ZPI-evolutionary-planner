@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import UserPreferences, Constraints, ManagementPreferences
+from .models import UserPreferences, Constraints, ManagementPreferences, HeatmapCache
 
 
 @admin.register(UserPreferences)
@@ -19,5 +19,12 @@ class ConstraintsAdmin(admin.ModelAdmin):
 @admin.register(ManagementPreferences)
 class ManagementPreferencesAdmin(admin.ModelAdmin):
     list_display = ['id', 'recruitment']
+    list_filter = ['recruitment']
+    search_fields = ['recruitment__recruitment_name']
+
+
+@admin.register(HeatmapCache)
+class HeatmapCacheAdmin(admin.ModelAdmin):
+    list_display = ['id', 'recruitment', 'last_updated', 'cached_value']
     list_filter = ['recruitment']
     search_fields = ['recruitment__recruitment_name']
