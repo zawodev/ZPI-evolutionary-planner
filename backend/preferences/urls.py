@@ -17,4 +17,9 @@ urlpatterns = [
         views.management_preferences_view,
         name='management-preferences'
     ),
+    path(
+        'aggregate-preferred-timeslots/<str:recruitment_id>/',
+        views.aggregate_preferred_timeslots_view,
+        name='aggregate-preferred-timeslots'
+    ),
 ]
