@@ -31,3 +31,11 @@
   color: #9ca3af;
   font-weight: 400;
 }
+
+.scrollbar--priority {
+  height: '6px';
+  border-radius: '5px';
+  background: '#e5e7eb';
+  outline: 'none';
+  accent-color: '#2163ff';
+}

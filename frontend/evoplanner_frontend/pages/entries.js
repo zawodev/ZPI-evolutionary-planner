@@ -1,3 +1,5 @@
+/* pages/entries.js */
+
 import React, { useState, useEffect, useRef } from "react";
 
 const calculateSlotPosition = (startTime, endTime) => {
@@ -86,7 +88,6 @@ export default function EntriesPage() {
       console.error('Error saving schedule:', error);
       alert('Nie udało się zapisać harmonogramu. Używam zapisu lokalnego...');
       
-      // Fallback - zapisz lokalnie
       const dataStr = JSON.stringify(scheduleData, null, 2);
       const dataBlob = new Blob([dataStr], { type: 'application/json' });
       const url = URL.createObjectURL(dataBlob);
@@ -167,7 +168,6 @@ export default function EntriesPage() {
     const gridStart = 7;
     const gridEnd = 18;
     
-    // Ograniczenie do granic kalendarza
     const clampedY = Math.max(0, Math.min(y, (gridEnd - gridStart) * hourHeight));
     
     const totalMinutes = Math.floor((clampedY / hourHeight) * 60);
@@ -474,14 +474,7 @@ export default function EntriesPage() {
                                     <span className="slot-label">Preferencja: {slot.label}</span>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '5px' }}>
                                       <span className="slot-time">{slot.start}-{slot.end}</span>
-                                      <span style={{ 
-                                        fontSize: '10px', 
-                                        fontWeight: '600', 
-                                        background: 'rgba(255, 255, 255, 0.9)',
-                                        padding: '2px 6px',
-                                        borderRadius: '4px',
-                                        color: '#2163ff'
-                                      }}>
+                                      <span className="slot--label-points">
                                         {slot.priority}pt
                                       </span>
                                     </div>
@@ -491,15 +484,10 @@ export default function EntriesPage() {
                               
                               {dragPreview && (
                                 <div
-                                  className="schedule-slot"
+                                  className="schedule-slot schedule-slot-creating"
                                   style={{
                                     top: `${dragPreview.top}px`,
                                     height: `${dragPreview.height}px`,
-                                    background: 'rgba(59, 130, 246, 0.3)',
-                                    borderColor: 'rgba(59, 130, 246, 0.6)',
-                                    borderStyle: 'dashed',
-                                    pointerEvents: 'none',
-                                    zIndex: 1000
                                   }}
                                 >
                                   <span className="slot-time">{dragPreview.startTime}-{dragPreview.endTime}</span>
@@ -579,36 +567,22 @@ export default function EntriesPage() {
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <button
                       onClick={() => setPendingSlot({...pendingSlot, type: 'prefer'})}
+                      className="btn"
                       style={{
-                        flex: 1,
-                        padding: '12px',
                         backgroundColor: pendingSlot?.type === 'prefer' ? 'rgba(34, 197, 94, 0.15)' : '#f9fafb',
                         color: pendingSlot?.type === 'prefer' ? '#22c55e' : '#6b7280',
                         border: pendingSlot?.type === 'prefer' ? '2px solid #22c55e' : '2px solid #e5e7eb',
-                        borderRadius: '10px',
-                        fontSize: '13px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        fontFamily: "'DM Sans', sans-serif"
                       }}
                     >
                       Chcę zajęcia
                     </button>
                     <button
                       onClick={() => setPendingSlot({...pendingSlot, type: 'avoid'})}
+                      className="btn"
                       style={{
-                        flex: 1,
-                        padding: '12px',
                         backgroundColor: pendingSlot?.type === 'avoid' ? 'rgba(239, 68, 68, 0.15)' : '#f9fafb',
                         color: pendingSlot?.type === 'avoid' ? '#ef4444' : '#6b7280',
                         border: pendingSlot?.type === 'avoid' ? '2px solid #ef4444' : '2px solid #e5e7eb',
-                        borderRadius: '10px',
-                        fontSize: '13px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        fontFamily: "'DM Sans', sans-serif"
                       }}
                     >
                       Chcę wolne
@@ -825,13 +799,9 @@ export default function EntriesPage() {
                     max="10"
                     value={editingSlot?.priority || 1}
                     onChange={(e) => setEditingSlot({...editingSlot, priority: parseInt(e.target.value)})}
+                    className="scrollbar--priority"
                     style={{
                       width: '100%',
-                      height: '6px',
-                      borderRadius: '5px',
-                      background: '#e5e7eb',
-                      outline: 'none',
-                      accentColor: '#2163ff'
                     }}
                   />
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5px', fontSize: '11px', color: '#9ca3af' }}>
