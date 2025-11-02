@@ -13,14 +13,16 @@
 }
 
 .card--login {
-  width: clamp(300px, 21.99vw, 450px);
+  width: 100%;
+  max-width: 450px;
   min-height: clamp(400px, 59.57vh, 700px);
   padding: clamp(30px, 4vh, 50px) clamp(25px, 3vw, 40px);
 }
 
 @media (max-width: 1024px) {
   .card--login {
-    width: clamp(280px, 30vw, 400px);
+    min-height: auto;
+    padding: clamp(25px, 3vh, 40px) clamp(20px, 2.5vw, 35px);
   }
 }
 
@@ -29,5 +31,6 @@
     width: 100%;
     max-width: 100%;
     min-height: auto;
+    padding: 30px 25px;
   }
 }
