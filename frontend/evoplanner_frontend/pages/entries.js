@@ -141,7 +141,6 @@ export default function EntriesPage() {
   }, []);
 
   const getPositionInfo = (e, columnElement) => {
-    // POPRAWKA: Dodano zabezpieczenia dla `rect` i `y`
     if (!columnElement) {
       return { time: "NaN:NaN", minutes: NaN };
     }
@@ -188,7 +187,6 @@ export default function EntriesPage() {
     const column = e.currentTarget;
     const posInfo = getPositionInfo(e, column);
 
-    // Nie rozpoczynaj przeciągania, jeśli pozycja jest nieprawidłowa
     if (isNaN(posInfo.minutes)) {
       setIsDragging(false);
       return;
@@ -209,7 +207,6 @@ export default function EntriesPage() {
     
     if (column) {
       const posInfo = getPositionInfo(e, column);
-      // Nie aktualizuj, jeśli pozycja jest nieprawidłowa
       if (!isNaN(posInfo.minutes)) {
         setDragEnd(posInfo);
       }
@@ -255,7 +252,7 @@ export default function EntriesPage() {
   const handleSlotClick = (e, day, slotIndex) => {
     e.stopPropagation();
     const slot = scheduleData[day][slotIndex];
-    if (!slot) return; // Dodatkowe zabezpieczenie
+    if (!slot) return;
 
     setEditingSlot({
       ...slot,
@@ -382,7 +379,7 @@ export default function EntriesPage() {
     
     const { top, height } = calculateSlotPosition(startTime, endTimeString);
 
-    if (height === 0) return null; // Nie pokazuj podglądu, jeśli jest niepoprawny
+    if (height === 0) return null;
 
     return {
       top,

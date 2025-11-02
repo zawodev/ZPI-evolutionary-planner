@@ -14,7 +14,6 @@ export default function PreferenceModal({
   onDelete,
 }) {
 
-  // Zapobiegaj renderowaniu, jeśli dane nie są gotowe
   if (mode === 'create' && !pendingSlot) return null;
   if (mode === 'edit' && !editingSlot) return null;
 
@@ -140,7 +139,6 @@ export default function PreferenceModal({
 
             <div>
               <label className="modal-label">
-                {/* POPRAWKA ZNAJDUJE SIĘ TUTAJ: */}
                 Punkty priorytetu: {currentSlot?.priority || 1}
               </label>
               <input
