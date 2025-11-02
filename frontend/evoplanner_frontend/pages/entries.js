@@ -1,3 +1,5 @@
+/* pages/entries.js */
+
 import React, { useState, useEffect, useRef } from "react";
 
 const calculateSlotPosition = (startTime, endTime) => {
@@ -86,7 +88,6 @@ export default function EntriesPage() {
       console.error('Error saving schedule:', error);
       alert('Nie udało się zapisać harmonogramu. Używam zapisu lokalnego...');
       
-      // Fallback - zapisz lokalnie
       const dataStr = JSON.stringify(scheduleData, null, 2);
       const dataBlob = new Blob([dataStr], { type: 'application/json' });
       const url = URL.createObjectURL(dataBlob);
@@ -167,7 +168,6 @@ export default function EntriesPage() {
     const gridStart = 7;
     const gridEnd = 18;
     
-    // Ograniczenie do granic kalendarza
     const clampedY = Math.max(0, Math.min(y, (gridEnd - gridStart) * hourHeight));
     
     const totalMinutes = Math.floor((clampedY / hourHeight) * 60);
@@ -400,7 +400,7 @@ export default function EntriesPage() {
                   <span>IKW - Zima, 2024/25</span>
                 </div>
                 {fileError && (
-                  <div style={{ padding: '10px', marginTop: '10px', fontSize: '12px', color: '#e74c3c', backgroundColor: '#ffe6e6', borderRadius: '4px' }}>
+                  <div className="entries-error-message">
                     {fileError}
                   </div>
                 )}
@@ -418,7 +418,7 @@ export default function EntriesPage() {
             </aside>
             <main className="entries-schedule">
               {isLoading ? (
-                <div style={{ padding: '20px', textAlign: 'center' }}>
+                <div className="entries-loading-indicator">
                   <p>Ładowanie harmonogramu...</p>
                 </div>
               ) : (
@@ -455,7 +455,6 @@ export default function EntriesPage() {
                               key={day} 
                               className="schedule-column"
                               onMouseDown={(e) => handleMouseDown(e, day, index)}
-                              style={{ cursor: 'crosshair', userSelect: 'none' }}
                             >
                               {scheduleData[day] && scheduleData[day].map((slot, slotIndex) => {
                                 const { top, height } = calculateSlotPosition(slot.start, slot.end);
@@ -465,23 +464,15 @@ export default function EntriesPage() {
                                     className={`schedule-slot ${slot.type}`}
                                     style={{
                                       top: `${top}px`,
-                                      height: `${height}px`,
-                                      pointerEvents: 'auto',
-                                      cursor: 'pointer'
+                                      height: `${height}px`
                                     }}
                                     onClick={(e) => handleSlotClick(e, day, slotIndex)}
+                                    onMouseDown={(e) => e.stopPropagation()}
                                   >
                                     <span className="slot-label">Preferencja: {slot.label}</span>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '5px' }}>
+                                    <div className="slot-details">
                                       <span className="slot-time">{slot.start}-{slot.end}</span>
-                                      <span style={{ 
-                                        fontSize: '10px', 
-                                        fontWeight: '600', 
-                                        background: 'rgba(255, 255, 255, 0.9)',
-                                        padding: '2px 6px',
-                                        borderRadius: '4px',
-                                        color: '#2163ff'
-                                      }}>
+                                      <span className="slot--label-points">
                                         {slot.priority}pt
                                       </span>
                                     </div>
@@ -491,15 +482,10 @@ export default function EntriesPage() {
                               
                               {dragPreview && (
                                 <div
-                                  className="schedule-slot"
+                                  className="schedule-slot schedule-slot-creating"
                                   style={{
                                     top: `${dragPreview.top}px`,
                                     height: `${dragPreview.height}px`,
-                                    background: 'rgba(59, 130, 246, 0.3)',
-                                    borderColor: 'rgba(59, 130, 246, 0.6)',
-                                    borderStyle: 'dashed',
-                                    pointerEvents: 'none',
-                                    zIndex: 1000
                                   }}
                                 >
                                   <span className="slot-time">{dragPreview.startTime}-{dragPreview.endTime}</span>
@@ -519,44 +505,12 @@ export default function EntriesPage() {
       </div>
 
       {showModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 10000,
-          backdropFilter: 'blur(4px)'
-        }}>
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.98)',
-            backdropFilter: 'blur(10px)',
-            borderRadius: '20px',
-            padding: '35px',
-            maxWidth: '450px',
-            width: '90%',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-            border: '1px solid rgba(255, 255, 255, 0.3)'
-          }}>
-            <h3 style={{ 
-              marginBottom: '10px', 
-              fontSize: '22px', 
-              fontWeight: '700',
-              color: '#000',
-              fontFamily: "'DM Sans', sans-serif"
-            }}>
+        <div className="modal-backdrop">
+          <div className="modal-content">
+            <h3 className="modal-title">
               {modalMode === 'create' ? 'Nowa preferencja' : 'Edytuj preferencję'}
             </h3>
-            <p style={{ 
-              marginBottom: '25px', 
-              color: '#6b7280', 
-              fontSize: '14px',
-              fontFamily: "'DM Sans', sans-serif"
-            }}>
+            <p className="modal-subtitle">
               {modalMode === 'create' 
                 ? `Zaznaczony czas: ${pendingSlot?.start} - ${pendingSlot?.end}`
                 : `Edytujesz: ${editingSlot?.start} - ${editingSlot?.end}`
@@ -564,52 +518,21 @@ export default function EntriesPage() {
             </p>
 
             {modalMode === 'create' ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <div className="modal-body">
                 <div>
-                  <label style={{ 
-                    display: 'block', 
-                    marginBottom: '8px', 
-                    fontSize: '13px', 
-                    fontWeight: '600',
-                    color: '#374151',
-                    fontFamily: "'DM Sans', sans-serif"
-                  }}>
+                  <label className="modal-label">
                     Typ preferencji
                   </label>
-                  <div style={{ display: 'flex', gap: '10px' }}>
+                  <div className="modal-button-group">
                     <button
                       onClick={() => setPendingSlot({...pendingSlot, type: 'prefer'})}
-                      style={{
-                        flex: 1,
-                        padding: '12px',
-                        backgroundColor: pendingSlot?.type === 'prefer' ? 'rgba(34, 197, 94, 0.15)' : '#f9fafb',
-                        color: pendingSlot?.type === 'prefer' ? '#22c55e' : '#6b7280',
-                        border: pendingSlot?.type === 'prefer' ? '2px solid #22c55e' : '2px solid #e5e7eb',
-                        borderRadius: '10px',
-                        fontSize: '13px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        fontFamily: "'DM Sans', sans-serif"
-                      }}
+                      className={`btn modal-choice-btn ${pendingSlot?.type === 'prefer' ? 'modal-choice-btn--prefer-active' : ''}`}
                     >
                       Chcę zajęcia
                     </button>
                     <button
                       onClick={() => setPendingSlot({...pendingSlot, type: 'avoid'})}
-                      style={{
-                        flex: 1,
-                        padding: '12px',
-                        backgroundColor: pendingSlot?.type === 'avoid' ? 'rgba(239, 68, 68, 0.15)' : '#f9fafb',
-                        color: pendingSlot?.type === 'avoid' ? '#ef4444' : '#6b7280',
-                        border: pendingSlot?.type === 'avoid' ? '2px solid #ef4444' : '2px solid #e5e7eb',
-                        borderRadius: '10px',
-                        fontSize: '13px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        fontFamily: "'DM Sans', sans-serif"
-                      }}
+                      className={`btn modal-choice-btn ${pendingSlot?.type === 'avoid' ? 'modal-choice-btn--avoid-active' : ''}`}
                     >
                       Chcę wolne
                     </button>
@@ -617,15 +540,8 @@ export default function EntriesPage() {
                 </div>
 
                 <div>
-                  <label style={{ 
-                    display: 'block', 
-                    marginBottom: '8px', 
-                    fontSize: '13px', 
-                    fontWeight: '600',
-                    color: '#374151',
-                    fontFamily: "'DM Sans', sans-serif"
-                  }}>
-                    Punkty priorytetu: {editingSlot?.priority}
+                  <label className="modal-label">
+                    Punkty priorytetu: {pendingSlot?.priority || 1}
                   </label>
                   <input
                     type="range"
@@ -633,175 +549,72 @@ export default function EntriesPage() {
                     max="10"
                     value={pendingSlot?.priority || 1}
                     onChange={(e) => setPendingSlot({...pendingSlot, priority: parseInt(e.target.value)})}
-                    style={{
-                      width: '100%',
-                      height: '6px',
-                      borderRadius: '5px',
-                      background: '#e5e7eb',
-                      outline: 'none',
-                      accentColor: '#2163ff'
-                    }}
+                    className="scrollbar--priority"
                   />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5px', fontSize: '11px', color: '#9ca3af' }}>
+                  <div className="modal-range-labels">
                     <span>1</span>
                     <span>10</span>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                <div className="modal-actions">
                   <button
                     onClick={handleAddSlot}
-                    style={{
-                      flex: 1,
-                      padding: '14px 20px',
-                      background: 'linear-gradient(135deg, #2163ff 0%, #1e40af 100%)',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '12px',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s',
-                      boxShadow: '0 4px 15px rgba(33, 99, 255, 0.3)',
-                      fontFamily: "'DM Sans', sans-serif"
-                    }}
-                    onMouseOver={(e) => {
-                      e.target.style.transform = 'translateY(-2px)';
-                      e.target.style.boxShadow = '0 6px 20px rgba(33, 99, 255, 0.4)';
-                    }}
-                    onMouseOut={(e) => {
-                      e.target.style.transform = 'translateY(0)';
-                      e.target.style.boxShadow = '0 4px 15px rgba(33, 99, 255, 0.3)';
-                    }}
+                    className="btn btn--primary btn--filler"
                   >
                     Dodaj
                   </button>
                   <button
                     onClick={handleCloseModal}
-                    style={{
-                      flex: 1,
-                      padding: '14px 20px',
-                      backgroundColor: '#f3f4f6',
-                      color: '#374151',
-                      border: '2px solid #e5e7eb',
-                      borderRadius: '12px',
-                      fontSize: '14px',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      fontFamily: "'DM Sans', sans-serif"
-                    }}
-                    onMouseOver={(e) => e.target.style.backgroundColor = '#e5e7eb'}
-                    onMouseOut={(e) => e.target.style.backgroundColor = '#f3f4f6'}
+                    className="btn btn--neutral btn--filler"
                   >
                     Anuluj
                   </button>
                 </div>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <div className="modal-body">
+                <div className="modal-input-grid">
                   <div>
-                    <label style={{ 
-                      display: 'block', 
-                      marginBottom: '6px', 
-                      fontSize: '12px', 
-                      fontWeight: '600',
-                      color: '#374151',
-                      fontFamily: "'DM Sans', sans-serif"
-                    }}>
+                    <label className="modal-label modal-label--small">
                       Start
                     </label>
                     <input
                       type="time"
                       value={editingSlot?.start || ''}
                       onChange={(e) => setEditingSlot({...editingSlot, start: e.target.value})}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        borderRadius: '8px',
-                        border: '2px solid #e5e7eb',
-                        fontSize: '13px',
-                        fontFamily: "'DM Sans', sans-serif",
-                        outline: 'none'
-                      }}
+                      className="modal-input"
                       step="900"
                     />
                   </div>
                   <div>
-                    <label style={{ 
-                      display: 'block', 
-                      marginBottom: '6px', 
-                      fontSize: '12px', 
-                      fontWeight: '600',
-                      color: '#374151',
-                      fontFamily: "'DM Sans', sans-serif"
-                    }}>
+                    <label className="modal-label modal-label--small">
                       Koniec
                     </label>
                     <input
                       type="time"
                       value={editingSlot?.end || ''}
                       onChange={(e) => setEditingSlot({...editingSlot, end: e.target.value})}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        borderRadius: '8px',
-                        border: '2px solid #e5e7eb',
-                        fontSize: '13px',
-                        fontFamily: "'DM Sans', sans-serif",
-                        outline: 'none'
-                      }}
+                      className="modal-input"
                       step="900"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label style={{ 
-                    display: 'block', 
-                    marginBottom: '8px', 
-                    fontSize: '13px', 
-                    fontWeight: '600',
-                    color: '#374151',
-                    fontFamily: "'DM Sans', sans-serif"
-                  }}>
+                  <label className="modal-label">
                     Typ preferencji
                   </label>
-                  <div style={{ display: 'flex', gap: '10px' }}>
+                  <div className="modal-button-group">
                     <button
                       onClick={() => setEditingSlot({...editingSlot, type: 'prefer'})}
-                      style={{
-                        flex: 1,
-                        padding: '12px',
-                        backgroundColor: editingSlot?.type === 'prefer' ? 'rgba(34, 197, 94, 0.15)' : '#f9fafb',
-                        color: editingSlot?.type === 'prefer' ? '#22c55e' : '#6b7280',
-                        border: editingSlot?.type === 'prefer' ? '2px solid #22c55e' : '2px solid #e5e7eb',
-                        borderRadius: '10px',
-                        fontSize: '13px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        fontFamily: "'DM Sans', sans-serif"
-                      }}
+                      className={`btn modal-choice-btn ${editingSlot?.type === 'prefer' ? 'modal-choice-btn--prefer-active' : ''}`}
                     >
                       Chcę zajęcia
                     </button>
                     <button
                       onClick={() => setEditingSlot({...editingSlot, type: 'avoid'})}
-                      style={{
-                        flex: 1,
-                        padding: '12px',
-                        backgroundColor: editingSlot?.type === 'avoid' ? 'rgba(239, 68, 68, 0.15)' : '#f9fafb',
-                        color: editingSlot?.type === 'avoid' ? '#ef4444' : '#6b7280',
-                        border: editingSlot?.type === 'avoid' ? '2px solid #ef4444' : '2px solid #e5e7eb',
-                        borderRadius: '10px',
-                        fontSize: '13px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        fontFamily: "'DM Sans', sans-serif"
-                      }}
+                      className={`btn modal-choice-btn ${editingSlot?.type === 'avoid' ? 'modal-choice-btn--avoid-active' : ''}`}
                     >
                       Chcę wolne
                     </button>
@@ -809,14 +622,7 @@ export default function EntriesPage() {
                 </div>
 
                 <div>
-                  <label style={{ 
-                    display: 'block', 
-                    marginBottom: '8px', 
-                    fontSize: '13px', 
-                    fontWeight: '600',
-                    color: '#374151',
-                    fontFamily: "'DM Sans', sans-serif"
-                  }}>
+                  <label className="modal-label">
                     Punkty priorytetu: {editingSlot?.priority}
                   </label>
                   <input
@@ -825,22 +631,15 @@ export default function EntriesPage() {
                     max="10"
                     value={editingSlot?.priority || 1}
                     onChange={(e) => setEditingSlot({...editingSlot, priority: parseInt(e.target.value)})}
-                    style={{
-                      width: '100%',
-                      height: '6px',
-                      borderRadius: '5px',
-                      background: '#e5e7eb',
-                      outline: 'none',
-                      accentColor: '#2163ff'
-                    }}
+                    className="scrollbar--priority"
                   />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5px', fontSize: '11px', color: '#9ca3af' }}>
+                  <div className="modal-range-labels">
                     <span>1</span>
                     <span>10</span>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                <div className="modal-actions">
                   <button onClick={handleUpdateSlot} className="btn btn--primary btn--filler">
                     Zapisz
                   </button>
