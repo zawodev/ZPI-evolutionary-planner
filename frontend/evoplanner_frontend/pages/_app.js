@@ -27,6 +27,7 @@ import "@/styles/components/_slots.css";
 // Layout styles
 import "@/styles/layout/_auth.css";
 import "@/styles/layout/_contact.css";
+import "@/styles/layout/_features.css";
 import "@/styles/layout/_header.css";
 import "@/styles/layout/_hero.css";
 import "@/styles/layout/_login.css";
