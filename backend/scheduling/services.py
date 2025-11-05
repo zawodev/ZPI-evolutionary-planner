@@ -3,11 +3,8 @@ from django.db.models import QuerySet
 from django.utils import timezone
 from django.db import transaction
 from .models import Meeting, Room, Recruitment
-import logging
+from optimizer.logger import logger
 from django.contrib.auth import get_user_model
-
-
-logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
@@ -32,16 +29,16 @@ def should_start_optimization(recruitment):
     if recruitment.plan_status != 'draft':
         return False
 
-    today = timezone.now().date()
+    now = timezone.now()
 
     # condition 1: optimization_start_date reached
-    if recruitment.optimization_start_date and today >= recruitment.optimization_start_date:
+    if recruitment.optimization_start_date and now >= recruitment.optimization_start_date:
         return True
 
     # condition 2: threshold reached between user_prefs_start_date and optimization_start_date
     if (recruitment.user_prefs_start_date and
         recruitment.optimization_start_date and
-        recruitment.user_prefs_start_date <= today < recruitment.optimization_start_date):
+        recruitment.user_prefs_start_date <= now < recruitment.optimization_start_date):
 
         # get total users in recruitment
         total_users = get_users_for_recruitment(recruitment).count()
@@ -94,19 +91,20 @@ def trigger_optimization(recruitment):
 def check_and_trigger_optimizations():
     """check all draft recruitments and trigger optimization if needed"""
     recruitments = Recruitment.objects.filter(plan_status='draft')
-
+    logger.debug(f"checking {recruitments.count()} draft recruitments for optimization triggers")
     for recruitment in recruitments:
         if should_start_optimization(recruitment):
+            logger.info(f"triggering optimization for recruitment {recruitment.recruitment_id}")
             trigger_optimization(recruitment)
 
 
 def archive_expired_recruitments():
     """archive recruitments that passed expiration_date"""
-    today = timezone.now().date()
+    now = timezone.now()
 
     expired = Recruitment.objects.filter(
         plan_status='active',
-        expiration_date__lt=today
+        expiration_date__lt=now
     )
 
     for recruitment in expired:
