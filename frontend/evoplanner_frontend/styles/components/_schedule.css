@@ -23,3 +23,9 @@
   display: flex;
   gap: 15px;
 }
+
+.schedule-column {
+  cursor: crosshair;
+  user-select: none;
+  position: relative; 
+}
