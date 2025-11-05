@@ -391,55 +391,53 @@ export default function EntriesPage() {
 
   return (
     <div className="entries-container">
-      <div className="entries-background">
-        <div className="entries-content">
-          <div className="entries-main">
-            <EntriesSidebar
-              fileError={fileError}
-              onSave={saveScheduleToFile}
-              onClear={clearAllPreferences}
-            />
-            <main className="entries-schedule">
-              {isLoading ? (
-                <div className="entries-loading-indicator">
-                  <p>Ładowanie harmonogramu...</p>
-                </div>
-              ) : (
-                <React.Fragment>
-                  <ScheduleHeader
-                    usedPriority={calculateUsedPriority()}
-                    maxPriority={maxPriority}
-                  />
-                  <div className="schedule-grid">
-                    <div className="schedule-times">
-                      {hours.map(time => (
-                        <div key={time} className="schedule-time">{time}</div>
+      <div className="entries-content">
+        <div className="entries-main">
+          <EntriesSidebar
+            fileError={fileError}
+            onSave={saveScheduleToFile}
+            onClear={clearAllPreferences}
+          />
+          <main className="entries-schedule">
+            {isLoading ? (
+              <div className="entries-loading-indicator">
+              <p>Ładowanie harmonogramu...</p>
+             </div>
+            ) : (
+              <React.Fragment>
+                <ScheduleHeader
+                  usedPriority={calculateUsedPriority()}
+                  maxPriority={maxPriority}
+                />
+                <div className="schedule-grid">
+                  <div className="schedule-times">
+                    {hours.map(time => (
+                      <div key={time} className="schedule-time">{time}</div>
+                    ))}
+                  </div>
+                  <div className="schedule-week">
+                    <div className="schedule-days">
+                      {dayLabels.map(day => (
+                        <span key={day} className="schedule-day">{day}</span>
                       ))}
                     </div>
-                    <div className="schedule-week">
-                      <div className="schedule-days">
-                        {dayLabels.map(day => (
-                          <span key={day} className="schedule-day">{day}</span>
-                        ))}
-                      </div>
-                      <div className="schedule-calendar" ref={calendarRef}>
-                        {days.map((day, index) => (
-                          <ScheduleColumn
-                            key={day}
-                            day={day}
-                            slots={(scheduleData[day] || []).filter(Boolean)}
+                    <div className="schedule-calendar" ref={calendarRef}>
+                      {days.map((day, index) => (
+                        <ScheduleColumn
+                          key={day}
+                          day={day}
+                          slots={(scheduleData[day] || []).filter(Boolean)}
                             dragPreview={(isDragging && dragDay === day) ? getDragPreview() : null}
-                            onMouseDown={(e) => handleMouseDown(e, day, index)}
-                            onSlotClick={handleSlotClick}
-                          />
-                        ))}
-                      </div>
+                          onMouseDown={(e) => handleMouseDown(e, day, index)}
+                          onSlotClick={handleSlotClick}
+                        />
+                      ))}
                     </div>
                   </div>
-                </React.Fragment>
-              )}
-            </main>
-          </div>
+                </div>
+              </React.Fragment>
+            )}
+          </main>
         </div>
       </div>
 
