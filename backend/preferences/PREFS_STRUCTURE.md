@@ -36,16 +36,16 @@ DEFAULT_CONSTRAINTS = {
     "TeachersUnavailabilityTimeslots": [
         [], # teacherId 0, list of timeslot ids
         [1, 2, 3], # teacherId 1, list of timeslot ids
-    ]
+    ],
+    "RoomsCapacity": [
+        0, # roomId 0, capacity
+        0  # roomId 1, capacity
+    ],
 }
 
 DEFAULT_MANAGEMENT_PREFERENCES = {
-    "GroupMaxOverflow": [
+    "RoomMaxOverflow": [
         [0, 0, 0], # roomId, maxOverflow, weight
         [0, 0, 0]
     ],
-    "GroupPreferredTags": [
-        [0, 0, 0], # groupId, tagId, weight
-        [0, 0, 0]
-    ]
 }

@@ -5,8 +5,7 @@
 
 ProblemData::ProblemData(const RawProblemData& input_data) : _rawData(input_data) {
     // calculate _total_timeslots
-    _total_timeslots = 0;
-    for (int t : _rawData.timeslots_per_day) _total_timeslots += t;
+    _total_timeslots = _rawData.timeslots_daily * _rawData.days_in_cycle;
 
     // calculate _subject_total_capacity
     _subject_total_capacity.resize(getSubjectsNum(), 0);
@@ -33,31 +32,19 @@ ProblemData::ProblemData(const RawProblemData& input_data) : _rawData(input_data
     _student_weights_sums.resize(getStudentsNum(), 0);
     for (int s = 0; s < getStudentsNum(); ++s) {
         const auto& pref = _rawData.students_preferences[s];
-        // sum free_days
-        for (int val : pref.free_days) {
-            _student_weights_sums[s] += val;
+        // sum width_height_info weight
+        _student_weights_sums[s] += std::abs(pref.width_height_info);
+        // sum gaps_info weight (third element is weight)
+        if (pref.gaps_info.size() >= 3) {
+            _student_weights_sums[s] += std::abs(pref.gaps_info[2]);
         }
-        // sum busy_days
-        for (int val : pref.busy_days) {
-            _student_weights_sums[s] += val;
+        // sum preferred_timeslots weights (absolute values)
+        for (int weight : pref.preferred_timeslots) {
+            _student_weights_sums[s] += std::abs(weight);
         }
-        // sum no_gaps weight
-        _student_weights_sums[s] += pref.no_gaps;
-        // sum preferred_groups values
-        for (const auto& pair : pref.preferred_groups) {
-            _student_weights_sums[s] += pair.second;
-        }
-        // sum avoid_groups values
-        for (const auto& pair : pref.avoid_groups) {
-            _student_weights_sums[s] += pair.second;
-        }
-        // sum preferred_timeslots values
-        for (const auto& pair : pref.preferred_timeslots) {
-            _student_weights_sums[s] += pair.second;
-        }
-        // sum avoid_timeslots values
-        for (const auto& pair : pref.avoid_timeslots) {
-            _student_weights_sums[s] += pair.second;
+        // sum preferred_groups weights (absolute values)
+        for (int weight : pref.preferred_groups) {
+            _student_weights_sums[s] += std::abs(weight);
         }
     }
 
@@ -111,12 +98,11 @@ int ProblemData::getAbsoluteGroupIndex(int idx_genu, int rel_group) const {
 }
 
 int ProblemData::getDayFromTimeslot(int timeslot) const {
-    int cum = 0;
-    for (int d = 0; d < getDaysNum(); ++d) {
-        cum += _rawData.timeslots_per_day[d];
-        if (timeslot < cum) return d;
-    }
-    return -1; // invalid
+    int timeslots_per_day = _rawData.timeslots_daily;
+    if (timeslots_per_day == 0) return -1;
+    int day = timeslot / timeslots_per_day;
+    if (day >= _rawData.days_in_cycle) return -1;
+    return day;
 }
 
 int ProblemData::getSubjectFromGroup(int group) const {

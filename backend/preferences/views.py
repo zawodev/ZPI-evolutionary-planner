@@ -24,6 +24,12 @@ DEFAULT_CONSTRAINTS = {
     "MinStudentsPerGroup": 0, # for each group, student count requirement (or group no start)
     "GroupsPerSubject": [0, 0, 0], # for each subject, number of groups
     "GroupsSoftCapacity": [0, 0, 0, 0, 0, 0], # for each group, soft capacity
+    "RoomsCapacity": [0, 0], # for each room, capacity
+    # rember about tags
+    "RoomsTags": [
+        [0, 0], # roomId, tagId
+        [0, 0]
+    ],
     "StudentsSubjects": [
         [0, 0, 0], # subjectIds list for student 0
         [0, 0] # subjectIds list for student 1
@@ -43,7 +49,8 @@ DEFAULT_CONSTRAINTS = {
     "TeachersUnavailabilityTimeslots": [
         [], # teacherId 0, list of timeslot ids
         [1, 2, 3], # teacherId 1, list of timeslot ids
-    ]
+    ],
+
 }
 
 
