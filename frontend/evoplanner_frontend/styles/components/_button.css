@@ -101,7 +101,7 @@
 }
 
 /* COMPONENT-SPECIFIC OVERRIDES */
-.btn--primary.btn--filler {
+.btn--filler {
   width: 100%;
 }
 
