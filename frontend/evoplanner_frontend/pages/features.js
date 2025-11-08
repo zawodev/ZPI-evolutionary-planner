@@ -71,7 +71,7 @@ export default function FeaturesPage() {
       {/* Hero Section */}
       <section className="features-hero">
         <div className="features-hero-content">
-          <h1 className="features-title">
+          <h1 className="features-title" style={{ textAlign: 'center' }}>
             Wszystko czego potrzebujesz <br />
             <span className="features-highlight">w jednym miejscu</span>
           </h1>

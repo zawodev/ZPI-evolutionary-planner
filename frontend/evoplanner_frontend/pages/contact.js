@@ -58,7 +58,7 @@ export default function ContactPage() {
       {/* Hero Section */}
       <section className="hero">
         <div className="hero__content">
-          <h1>
+          <h1 style={{ textAlign: 'center' }}>
             Porozmawiajmy
             <br />
             <span>o Twoich potrzebach</span>
