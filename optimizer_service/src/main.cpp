@@ -23,7 +23,7 @@ void processJob(EventReceiver& receiver, EventSender& sender) {
         return;
     }
 
-    std::string debugMsg = "Job " + jobData.recruitment_id + " - ProblemData with " + 
+    std::string debugMsg = "New job from Recruitment: " + jobData.recruitment_id + " - ProblemData with " + 
                            std::to_string(data.getStudentsNum()) + " students, " +
                            std::to_string(data.getGroupsNum()) + " groups, " +
                            std::to_string(data.getSubjectsNum()) + " subjects, " +
@@ -38,6 +38,7 @@ void processJob(EventReceiver& receiver, EventSender& sender) {
     
     //int seed = 42;
     int seed = std::random_device{}();
+    Logger::info("Initializing genetic algorithm with seed: " + std::to_string(seed));
     geneticAlgorithm->Init(data, evaluator, seed);
     Logger::info("Genetic algorithm initialization complete. Starting iterations...");
 
