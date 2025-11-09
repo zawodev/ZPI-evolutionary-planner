@@ -12,9 +12,4 @@ urlpatterns = [
         views.constraints_view,
         name='constraints'
     ),
-    path(
-        'management-preferences/<str:recruitment_id>/',
-        views.management_preferences_view,
-        name='management-preferences'
-    ),
 ]

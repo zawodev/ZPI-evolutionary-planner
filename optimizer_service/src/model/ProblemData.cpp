@@ -12,7 +12,7 @@ ProblemData::ProblemData(const RawProblemData& input_data) : _rawData(input_data
     int group_idx = 0;
     for (int p = 0; p < getSubjectsNum(); ++p) {
         for (int g = 0; g < _rawData.groups_per_subject[p]; ++g) {
-            _subject_total_capacity[p] += _rawData.groups_soft_capacity[group_idx++];
+            _subject_total_capacity[p] += _rawData.groups_capacity[group_idx++];
         }
     }
 

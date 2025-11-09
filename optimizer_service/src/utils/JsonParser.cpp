@@ -41,7 +41,10 @@ RawProblemData JsonParser::toRawProblemData(const nlohmann::json& j) {
         data.days_in_cycle = c.at("DaysInCycle").get<int>();
         data.min_students_per_group = c.at("MinStudentsPerGroup").get<int>();
         data.groups_per_subject = c.at("GroupsPerSubject").get<std::vector<int>>();
-        data.groups_soft_capacity = c.at("GroupsSoftCapacity").get<std::vector<int>>();
+        data.groups_capacity = c.at("GroupsCapacity").get<std::vector<int>>();
+        data.rooms_capacity = c.at("RoomsCapacity").get<std::vector<int>>();
+        data.groups_tags = c.at("GroupsTags").get<std::vector<std::vector<int>>>();
+        data.rooms_tags = c.at("RoomsTags").get<std::vector<std::vector<int>>>();
         data.students_subjects = c.at("StudentsSubjects").get<std::vector<std::vector<int>>>();
         data.teachers_groups = c.at("TeachersGroups").get<std::vector<std::vector<int>>>();
         data.rooms_unavailability_timeslots = c.at("RoomsUnavailabilityTimeslots").get<std::vector<std::vector<int>>>();
@@ -74,16 +77,6 @@ RawProblemData JsonParser::toRawProblemData(const nlohmann::json& j) {
             }
         }
         
-        // management preferences
-        if (p.contains("management")) {
-            const auto& m = p.at("management");
-            if (m.contains("GroupMaxOverflow")) {
-                data.management_preferences.group_max_overflow = m.at("GroupMaxOverflow").get<std::vector<std::vector<int>>>();
-            }
-            if (m.contains("GroupPreferredTags")) {
-                data.management_preferences.group_preferred_tags = m.at("GroupPreferredTags").get<std::vector<std::vector<int>>>();
-            }
-        }
         return data;
     } catch (const nlohmann::json::exception& e) {
         throw std::runtime_error(std::string("JSON structure error: ") + e.what());
@@ -99,7 +92,10 @@ nlohmann::json JsonParser::toJson(const RawProblemData& data) {
     j["constraints"]["DaysInCycle"] = data.days_in_cycle;
     j["constraints"]["MinStudentsPerGroup"] = data.min_students_per_group;
     j["constraints"]["GroupsPerSubject"] = data.groups_per_subject;
-    j["constraints"]["GroupsSoftCapacity"] = data.groups_soft_capacity;
+    j["constraints"]["GroupsCapacity"] = data.groups_capacity;
+    j["constraints"]["RoomsCapacity"] = data.rooms_capacity;
+    j["constraints"]["GroupsTags"] = data.groups_tags;
+    j["constraints"]["RoomsTags"] = data.rooms_tags;
     j["constraints"]["StudentsSubjects"] = data.students_subjects;
     j["constraints"]["TeachersGroups"] = data.teachers_groups;
     j["constraints"]["RoomsUnavailabilityTimeslots"] = data.rooms_unavailability_timeslots;
@@ -126,12 +122,6 @@ nlohmann::json JsonParser::toJson(const RawProblemData& data) {
             t.push_back(tp.preferred_timeslots);
             j["preferences"]["teachers"].push_back(t);
         }
-    }
-    
-    if (!data.management_preferences.group_max_overflow.empty() ||
-        !data.management_preferences.group_preferred_tags.empty()) {
-        j["preferences"]["management"]["GroupMaxOverflow"] = data.management_preferences.group_max_overflow;
-        j["preferences"]["management"]["GroupPreferredTags"] = data.management_preferences.group_preferred_tags;
     }
     
     return j;
@@ -261,7 +251,10 @@ void JsonParser::writeInput(const std::string& filename, const RawProblemData& d
         json_str += "    \"DaysInCycle\": " + std::to_string(j["constraints"]["DaysInCycle"].get<int>()) + ",\n";
         json_str += "    \"MinStudentsPerGroup\": " + std::to_string(j["constraints"]["MinStudentsPerGroup"].get<int>()) + ",\n";
         json_str += "    \"GroupsPerSubject\": " + j["constraints"]["GroupsPerSubject"].dump() + ",\n";
-        json_str += "    \"GroupsSoftCapacity\": " + j["constraints"]["GroupsSoftCapacity"].dump() + ",\n";
+        json_str += "    \"GroupsCapacity\": " + j["constraints"]["GroupsCapacity"].dump() + ",\n";
+        json_str += "    \"RoomsCapacity\": " + j["constraints"]["RoomsCapacity"].dump() + ",\n";
+        json_str += "    \"GroupsTags\": " + formatVectorOfVectors(j["constraints"]["GroupsTags"]) + ",\n";
+        json_str += "    \"RoomsTags\": " + formatVectorOfVectors(j["constraints"]["RoomsTags"]) + ",\n";
         json_str += "    \"StudentsSubjects\": " + formatVectorOfVectors(j["constraints"]["StudentsSubjects"]) + ",\n";
         json_str += "    \"TeachersGroups\": " + formatVectorOfVectors(j["constraints"]["TeachersGroups"]) + ",\n";
         json_str += "    \"RoomsUnavailabilityTimeslots\": " + formatVectorOfVectors(j["constraints"]["RoomsUnavailabilityTimeslots"]) + ",\n";
