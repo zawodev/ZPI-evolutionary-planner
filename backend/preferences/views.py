@@ -1,8 +1,8 @@
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import UserPreferences, Constraints, ManagementPreferences, HeatmapCache
-from .serializers import UserPreferencesSerializer, ConstraintsSerializer, ManagementPreferencesSerializer
+from .models import UserPreferences, Constraints, HeatmapCache
+from .serializers import UserPreferencesSerializer, ConstraintsSerializer
 from identity.models import User
 from scheduling.models import Recruitment
 import copy
@@ -24,7 +24,16 @@ DEFAULT_CONSTRAINTS = {
     "DaysInCycle": 0, # 7, 14 or 28
     "MinStudentsPerGroup": 0, # for each group, student count requirement (or group no start)
     "GroupsPerSubject": [0, 0, 0], # for each subject, number of groups
-    "GroupsSoftCapacity": [0, 0, 0, 0, 0, 0], # for each group, soft capacity
+    "GroupsCapacity": [0, 0, 0, 0, 0, 0], # for each group, capacity
+    "RoomsCapacity": [0, 0], # for each room, capacity
+    "GroupsTags": [
+        [0, 0], # groupId, tagId
+        [0, 0]
+    ],
+    "RoomsTags": [
+        [0, 0], # roomId, tagId
+        [0, 0]
+    ],
     "StudentsSubjects": [
         [0, 0, 0], # subjectIds list for student 0
         [0, 0] # subjectIds list for student 1
@@ -44,18 +53,6 @@ DEFAULT_CONSTRAINTS = {
     "TeachersUnavailabilityTimeslots": [
         [], # teacherId 0, list of timeslot ids
         [1, 2, 3], # teacherId 1, list of timeslot ids
-    ]
-}
-
-
-DEFAULT_MANAGEMENT_PREFERENCES = {
-    "GroupMaxOverflow": [
-        [0, 0, 0], # roomId, maxOverflow, weight
-        [0, 0, 0]
-    ],
-    "GroupPreferredTags": [
-        [0, 0, 0], # groupId, tagId, weight
-        [0, 0, 0]
     ]
 }
 
@@ -244,75 +241,6 @@ def constraints_view(request, recruitment_id):
                 constraints.save()
             
             serializer = ConstraintsSerializer(constraints)
-            return Response(serializer.data)
-    
-    except Exception as e:
-        return Response(
-            {'error': str(e)},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-
-
-@api_view(['GET', 'PUT'])
-def management_preferences_view(request, recruitment_id):
-    # validate recruitment_id is UUID format
-    is_valid, recruitment_uuid = validate_uuid(recruitment_id)
-    if not is_valid:
-        return Response(
-            {'error': f'Invalid recruitment_id format. Expected UUID, got: {recruitment_id}'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-    # check if Recruitment exists
-    try:
-        recruitment = Recruitment.objects.get(recruitment_id=recruitment_uuid)
-    except Recruitment.DoesNotExist:
-        return Response(
-            {'error': f'Recruitment with id {recruitment_id} not found'},
-            status=status.HTTP_404_NOT_FOUND
-        )
-    
-    try:
-        if request.method == 'GET':
-            # check if ManagementPreferences exist
-            try:
-                preferences = ManagementPreferences.objects.get(recruitment_id=recruitment_uuid)
-                serializer = ManagementPreferencesSerializer(preferences)
-                return Response(serializer.data)
-            except ManagementPreferences.DoesNotExist:
-                return Response({
-                        'error': f'Management preferences for recruitment {recruitment_id} not found',
-                        'message': 'Use PUT request to create management preferences'
-                    },
-                    status=status.HTTP_404_NOT_FOUND
-                )
-        
-        elif request.method == 'PUT':
-            # create or update preferences
-            preferences, created = ManagementPreferences.objects.get_or_create(
-                recruitment_id=recruitment_uuid,
-                defaults={'preferences_data': DEFAULT_MANAGEMENT_PREFERENCES.copy()}
-            )
-            
-            # check if request contains path and value
-            if 'path' in request.data and 'value' in request.data:
-                path = request.data['path']
-                value = request.data['value']
-                preferences.preferences_data = update_nested_dict(
-                    preferences.preferences_data,
-                    path,
-                    value
-                )
-                preferences.save()
-            else:
-                # full replacement of preferences_data
-                if 'preferences_data' in request.data:
-                    preferences.preferences_data = request.data['preferences_data']
-                else:
-                    preferences.preferences_data = request.data
-                preferences.save()
-            
-            serializer = ManagementPreferencesSerializer(preferences)
             return Response(serializer.data)
     
     except Exception as e:

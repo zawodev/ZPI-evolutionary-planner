@@ -81,11 +81,11 @@ class Recruitment(models.Model):
     day_start_time = models.TimeField(blank=True, null=True)
     day_end_time = models.TimeField(blank=True, null=True)
 
-    host_prefs_start_date = models.DateField(blank=True, null=True) # zbieranie preferencji hostów
-    user_prefs_start_date = models.DateField(blank=True, null=True) # zbieranie preferencji użytkowników
-    optimization_start_date = models.DateField(blank=True, null=True) # rozpoczęcie optymalizacji
-    optimization_end_date = models.DateField(blank=True, null=True) # zakończenie optymalizacji
-    expiration_date = models.DateField(blank=True, null=True) # data wygaśnięcia rekrutacji
+    host_prefs_start_date = models.DateTimeField(blank=True, null=True) # zbieranie preferencji hostów
+    user_prefs_start_date = models.DateTimeField(blank=True, null=True) # zbieranie preferencji użytkowników
+    optimization_start_date = models.DateTimeField(blank=True, null=True) # rozpoczęcie optymalizacji
+    optimization_end_date = models.DateTimeField(blank=True, null=True) # zakończenie optymalizacji
+    expiration_date = models.DateTimeField(blank=True, null=True) # data wygaśnięcia rekrutacji
 
     preference_threshold = models.FloatField(default=0.5)
     users_submitted_count = models.IntegerField(default=0)

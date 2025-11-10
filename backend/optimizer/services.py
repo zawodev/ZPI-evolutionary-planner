@@ -22,9 +22,32 @@ def convert_preferences_to_problem_data(recruitment_id: str) -> Dict[str, Any]:
         
     Returns:
         Dict containing problem_data in the format expected by the optimizer
+        
+    Format (matching new-input-updated.json):
+    {
+        "constraints": {
+            "TimeslotsDaily": int,
+            "DaysInCycle": int,
+            "GroupsPerSubject": [int, ...],
+            "GroupsCapacity": [int, ...],
+            "MinStudentsPerGroup": int,
+            "RoomsCapacity": [int, ...],
+            "GroupsTags": [[string, ...], ...],
+            "RoomsTags": [[string, ...], ...],
+            "StudentsSubjects": [[int, ...], ...],
+            "TeachersGroups": [[int, ...], ...],
+            "RoomsUnavailabilityTimeslots": [[int, ...], ...],
+            "StudentsUnavailabilityTimeslots": [[int, ...], ...],
+            "TeachersUnavailabilityTimeslots": [[int, ...], ...]
+        },
+        "preferences": {
+            "students": [[WidthHeightInfo, [minGaps, maxGaps, weight], [timeslot_weights...], [group_weights...]], ...],
+            "teachers": [[WidthHeightInfo, [minGaps, maxGaps, weight], [timeslot_weights...]], ...]
+        }
+    }
     """
     from scheduling.models import Recruitment
-    from preferences.models import UserPreferences, Constraints, ManagementPreferences
+    from preferences.models import UserPreferences, Constraints
     from identity.models import UserRecruitment
     
     try:
@@ -38,14 +61,6 @@ def convert_preferences_to_problem_data(recruitment_id: str) -> Dict[str, Any]:
         except Constraints.DoesNotExist:
             logger.error(f"No constraints found for recruitment {recruitment_id}")
             raise ValueError(f"No constraints found for recruitment {recruitment_id}")
-        
-        # get management preferences (should be one per recruitment)
-        try:
-            management_prefs = ManagementPreferences.objects.get(recruitment_id=recruitment_id)
-            management_data = management_prefs.preferences_data
-        except ManagementPreferences.DoesNotExist:
-            logger.error(f"No management preferences found for recruitment {recruitment_id}")
-            raise ValueError(f"No management preferences found for recruitment {recruitment_id}")
         
         # get all users in this recruitment
         user_recruitments = UserRecruitment.objects.filter(
@@ -71,7 +86,7 @@ def convert_preferences_to_problem_data(recruitment_id: str) -> Dict[str, Any]:
                 )
                 prefs_data = user_prefs.preferences_data
                 
-                # extract preference fields
+                # extract preference fields (new format with capital case)
                 width_height_info = prefs_data.get('WidthHeightInfo', 0)
                 gaps_info = prefs_data.get('GapsInfo', [0, 0, 0])
                 preferred_timeslots = prefs_data.get('PreferredTimeslots', [])
@@ -105,18 +120,31 @@ def convert_preferences_to_problem_data(recruitment_id: str) -> Dict[str, Any]:
                 elif user.role == 'host':
                     teachers_preferences.append([0, [0, 0, 0], []])
         
-        # build problem_data structure
+        # build problem_data structure (with constraints and preferences separation)
         problem_data = {
             "constraints": constraints_data,
             "preferences": {
-                "management": management_data,
                 "students": students_preferences,
                 "teachers": teachers_preferences
             }
         }
         
+        # validate data consistency
+        teachers_groups_count = len(constraints_data.get('TeachersGroups', []))
+        students_subjects_count = len(constraints_data.get('StudentsSubjects', []))
+        
         logger.info(f"Successfully converted preferences to problem_data for recruitment {recruitment_id}")
-        logger.info(f"Students count: {len(students_preferences)}, Teachers count: {len(teachers_preferences)}")
+        logger.info(f"Students count: {len(students_preferences)} (constraints: {students_subjects_count})")
+        logger.info(f"Teachers count: {len(teachers_preferences)} (constraints: {teachers_groups_count})")
+        
+        # check for data inconsistency
+        if len(students_preferences) != students_subjects_count:
+            logger.error(f"DATA INCONSISTENCY: students_preferences count ({len(students_preferences)}) != "
+                        f"StudentsSubjects count ({students_subjects_count})")
+        
+        if len(teachers_preferences) != teachers_groups_count:
+            logger.error(f"DATA INCONSISTENCY: teachers_preferences count ({len(teachers_preferences)}) != "
+                        f"TeachersGroups count ({teachers_groups_count})")
         
         return problem_data
         
@@ -344,16 +372,16 @@ class RedisService:
     def publish_job(self, job_data: Dict[str, Any]):
         """Publish optimization job to Redis queue"""
         try:
-            job_id = job_data['job_id']
+            recruitment_id = job_data['recruitment_id']
             message = json.dumps(job_data)
             
             # Push job to the queue (LPUSH for FIFO with BRPOP)
             self.redis_client.lpush("optimizer:jobs", message)
-            logger.info(f"Published job {job_id} to Redis queue")
-            print(f"[REDIS] Published job to queue: {job_id}")
+            logger.info(f"Published job {recruitment_id} to Redis queue")
+            print(f"[REDIS] Published job to queue: {recruitment_id}")
             
         except Exception as e:
-            logger.error(f"Failed to publish job {job_data.get('job_id', 'unknown')}: {e}")
+            logger.error(f"Failed to publish job {job_data.get('recruitment_id', 'unknown')}: {e}")
             raise
     
     def cancel_job(self, job_id: str):
@@ -565,9 +593,10 @@ class OptimizerService:
                 max_execution_time=max_execution_time
             )
             
-            # Prepare job data for optimizer (matching RawJobData format)
+            # Prepare job data for optimizer (matching RawJobData format in C++)
+            # Note: RawJobData expects "recruitment_id", not "job_id"
             job_data = {
-                'job_id': str(job.id),
+                'recruitment_id': str(job.id),  # C++ uses recruitment_id field
                 'problem_data': problem_data,
                 'max_execution_time': max_execution_time
             }

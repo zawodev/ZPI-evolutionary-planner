@@ -48,24 +48,6 @@ class Constraints(models.Model):
         return f"Constraints for {self.recruitment}"
 
 
-class ManagementPreferences(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    recruitment = models.OneToOneField(
-        Recruitment,
-        on_delete=models.CASCADE,
-        db_column='recruitmentid',
-        related_name='management_preferences'
-    )
-    # preferences_data structure can be viewed in views.py
-    preferences_data = models.JSONField(default=dict)
-
-    class Meta:
-        db_table = 'preferences_management_preferences'
-
-    def __str__(self):
-        return f"ManagementPreferences for {self.recruitment}"
-
-
 class HeatmapCache(models.Model):
     """Cache for aggregated preferred timeslots per recruitment.
 
