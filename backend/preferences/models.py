@@ -2,6 +2,7 @@ from django.db import models
 from identity.models import User
 from scheduling.models import Recruitment
 import uuid
+from django.utils import timezone
 
 
 class UserPreferences(models.Model):
@@ -45,3 +46,28 @@ class Constraints(models.Model):
 
     def __str__(self):
         return f"Constraints for {self.recruitment}"
+
+
+class HeatmapCache(models.Model):
+    """Cache for aggregated preferred timeslots per recruitment.
+
+    Fields:
+    - recruitment: FK to Recruitment (unique) - which recruitment the cache is for
+    - last_updated: DateTime of last calculation
+    - cached_value: JSONField storing the aggregated PreferredTimeslots (list)
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    recruitment = models.OneToOneField(
+        Recruitment,
+        on_delete=models.CASCADE,
+        db_column='recruitmentid',
+        related_name='heatmap_cache'
+    )
+    last_updated = models.DateTimeField(default=timezone.now)
+    cached_value = models.JSONField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'preferences_heatmap_cache'
+
+    def __str__(self):
+        return f"HeatmapCache for {self.recruitment} (updated: {self.last_updated})"

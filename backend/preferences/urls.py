@@ -12,4 +12,9 @@ urlpatterns = [
         views.constraints_view,
         name='constraints'
     ),
+    path(
+        'aggregate-preferred-timeslots/<str:recruitment_id>/',
+        views.aggregate_preferred_timeslots_view,
+        name='aggregate-preferred-timeslots'
+    ),
 ]
