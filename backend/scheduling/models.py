@@ -5,12 +5,14 @@ import uuid
 
 
 class Subject(models.Model):
+    # czy tu nie powinno być FK do Organization?? (nie wiem pytam)
     subject_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     subject_name = models.CharField(max_length=255)
     duration_blocks = models.IntegerField(
         help_text="duration in 15-minute blocks (4 = 1 hour)",
         default=4
     )
+    capacity = models.IntegerField(default=1)
 
     class Meta:
         db_table = 'scheduling_subjects'
