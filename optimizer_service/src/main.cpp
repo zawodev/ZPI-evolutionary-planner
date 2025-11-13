@@ -33,7 +33,7 @@ void processJob(EventReceiver& receiver, EventSender& sender) {
     Logger::info(debugMsg);
 
     Evaluator evaluator(data);
-    std::unique_ptr<IGeneticAlgorithm> geneticAlgorithm = std::make_unique<ExampleGeneticAlgorithm>();
+    std::unique_ptr<IGeneticAlgorithm> geneticAlgorithm = std::make_unique<ZawodevGeneticAlgorithm>();
     Logger::info("Using genetic algorithm: " + std::string(typeid(*geneticAlgorithm).name()));
     
     //int seed = 42;
@@ -80,25 +80,24 @@ void processJob(EventReceiver& receiver, EventSender& sender) {
 void testGenerateAndSave() {
     TestCaseGenerator generator;
     int numStudents = 200;
-    int numGroups = 14;
-    int numSubjects = 4;
-    int numRooms = 3;
-    int numTeachers = 3;
+    int numGroups = 40;
+    int numSubjects = 16;
+    int numRooms = 12;
+    int numTeachers = 10;
     int numTimeslots = 56;
-    int totalGroupCapacity = 260;
-    int executionTime = 60;
+    int extraCapacity = 100; // extra seats distributed randomly across groups (0 = exactly enough capacity)
+    int executionTime = 600;
 
-    RawJobData testJob = generator.generateJob(numStudents, numGroups, numSubjects, numRooms, numTeachers, numTimeslots, totalGroupCapacity, executionTime);
+    RawJobData testJob = generator.generateJob(numStudents, numGroups, numSubjects, numRooms, numTeachers, numTimeslots, extraCapacity, executionTime);
     
-    std::string filename = "data/test_job_1.json";
+    std::string filename = "data/input/test_job_1.json";
     JsonParser::writeJobInput(filename, testJob);
     Logger::info("Generated test job saved to " + filename);
 }
 
 int main() {
     try {
-        //testGenerateAndSave();
-        //return 0;
+        //testGenerateAndSave(); return 0;
         Logger::info("Starting Optimizer Service...");
 
         // we use redis if REDIS_HOST environment variable is set (in docker), otherwise use file-based
