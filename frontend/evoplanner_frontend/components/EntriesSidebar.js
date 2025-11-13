@@ -10,12 +10,11 @@ export default function EntriesSidebar({
   onSelectRecruitment
 }) {
   
-  // Filtrowanie rekrutacji zgodnie z prośbą
   const upcomingRecruitments = recruitments.filter(rec => 
     rec.plan_status === 'draft'
   );
   const completedRecruitments = recruitments.filter(rec => 
-    rec.plan_status !== 'draft' // Cała reszta ('active', 'optimizing', 'archived')
+    rec.plan_status !== 'draft'
   );
 
   return (
@@ -25,7 +24,6 @@ export default function EntriesSidebar({
         {isLoading && <div className="entries-item">Ładowanie...</div>}
         {fileError && <div className="entries-error-message">{fileError}</div>}
         
-        {/* Pętla dla rekrutacji "nadchodzących" (draft) */}
         {!isLoading && !fileError && upcomingRecruitments.length > 0 ? (
           upcomingRecruitments.map(rec => (
             <div
@@ -34,7 +32,6 @@ export default function EntriesSidebar({
               onClick={() => onSelectRecruitment(rec)}
             >
               <span>{rec.recruitment_name}</span>
-              {/* Usunięto wyświetlanie statusu */}
             </div>
           ))
         ) : (
@@ -44,7 +41,6 @@ export default function EntriesSidebar({
       <div className="entries-section">
         <h3 className="entries-section-title">Zakończone zgłoszenia:</h3>
         
-        {/* Pętla dla rekrutacji "zakończonych" (reszta) */}
         {isLoading && <div className="entries-item">Ładowanie...</div>}
         {!isLoading && !fileError && completedRecruitments.length > 0 ? (
           completedRecruitments.map(rec => (
@@ -54,7 +50,6 @@ export default function EntriesSidebar({
               onClick={() => onSelectRecruitment(rec)}
             >
               <span>{rec.recruitment_name}</span>
-              {/* Usunięto wyświetlanie statusu */}
             </div>
           ))
         ) : (
@@ -66,7 +61,7 @@ export default function EntriesSidebar({
         <button
           onClick={onSave}
           className="btn btn--primary btn--filler"
-          disabled={!selectedRecruitment} // Wyłącz, jeśli nic nie wybrano
+          disabled={!selectedRecruitment}
         >
           Zachowaj zmiany
         </button>
@@ -74,7 +69,7 @@ export default function EntriesSidebar({
         <button
           onClick={onClear}
           className="btn btn--delete btn--filler"
-          disabled={!selectedRecruitment} // Wyłącz, jeśli nic nie wybrano
+          disabled={!selectedRecruitment}
         >
           Wyczyść Preferencje
         </button>
