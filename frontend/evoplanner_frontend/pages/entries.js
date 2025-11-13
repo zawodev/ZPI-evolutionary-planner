@@ -6,8 +6,18 @@ import ScheduleHeader from "../components/ScheduleHeader";
 import ScheduleColumn from "../components/ScheduleColumn";
 import PreferenceModal from "../components/PreferenceModal";
 import { calculateSlotPosition, timeToMinutes, minutesToTime } from "../utils/schedule";
+import { useAuth } from '../contexts/AuthContext.js'; // <--- DODANO IMPORT KONTEKSTU
 
 export default function EntriesPage() {
+  const { user } = useAuth(); // <--- POBRANIE DANYCH UŻYTKOWNIKA
+
+  // Stan dla rekrutacji
+  const [recruitments, setRecruitments] = useState([]);
+  const [selectedRecruitment, setSelectedRecruitment] = useState(null);
+  const [isLoadingRecruitments, setIsLoadingRecruitments] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+
+  // Stan dla harmonogramu (preferencji)
   const [scheduleData, setScheduleData] = useState({
     monday: [],
     tuesday: [],
@@ -16,8 +26,7 @@ export default function EntriesPage() {
     friday: []
   });
 
-  const [fileError, setFileError] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingSchedule, setIsLoadingSchedule] = useState(false); // Oddzielny stan ładowania dla preferencji
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState(null);
   const [dragEnd, setDragEnd] = useState(null);
@@ -34,9 +43,89 @@ export default function EntriesPage() {
   const dayLabels = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt'];
   const hours = ["7:00", "8:00", "9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"];
 
-  const JSON_FILE_PATH = '/json/report-schedule.json';
+  // Pobieranie listy rekrutacji dla użytkownika
+  useEffect(() => {
+    if (user && user.id) {
+      const fetchRecruitments = async () => {
+        setIsLoadingRecruitments(true);
+        setFetchError(null);
+        const token = localStorage.getItem('access_token');
+
+        if (!token) {
+          setFetchError("Brak autoryzacji. Zaloguj się ponownie.");
+          setIsLoadingRecruitments(false);
+          return;
+        }
+
+        try {
+          const response = await fetch(`http://127.0.0.1:8000/api/v1/identity/users/${user.id}/recruitments/`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error(`Błąd pobierania rekrutacji: ${response.statusText}`);
+          }
+          const data = await response.json();
+          setRecruitments(data);
+        } catch (error) {
+          setFetchError(error.message);
+          console.error('Błąd pobierania rekrutacji:', error);
+        } finally {
+          setIsLoadingRecruitments(false);
+        }
+      };
+      fetchRecruitments();
+    } else {
+      // Jeśli nie ma użytkownika, nie ładuj
+      setIsLoadingRecruitments(false);
+    }
+  }, [user]); // Uruchom, gdy zmieni się użytkownik
+
+  // Efekt do ładowania preferencji, gdy zmieni się wybrana rekrutacja
+  useEffect(() => {
+    if (selectedRecruitment && user) {
+      // TODO: Zaimplementować pobieranie i transformację danych preferencji
+      // Na razie czyścimy dane i ustawiamy ładowanie
+      console.log(`Wybrano rekrutację: ${selectedRecruitment.recruitment_id}. Gotowy do pobrania preferencji.`);
+      
+      // Tutaj w przyszłości będzie fetch do:
+      // /api/v1/preferences/user-preferences/<recruitment_id>/<user_id>/
+      // i transformacja danych z PreferredTimeslots na format scheduleData
+      
+      setIsLoadingSchedule(true); // Ustaw ładowanie harmonogramu
+      
+      // Symulacja ładowania
+      setTimeout(() => {
+        // Na razie ładujemy puste dane, docelowo tu będzie transformacja
+        setScheduleData({
+          monday: [],
+          tuesday: [],
+          wednesday: [],
+          thursday: [],
+          friday: []
+        });
+        setIsLoadingSchedule(false); // Zakończ ładowanie harmonogramu
+      }, 500); // Usunąć timeout po implementacji fetch
+
+    } else {
+      // Wyczyść dane, jeśli nie wybrano rekrutacji
+      setScheduleData({
+        monday: [],
+        tuesday: [],
+        wednesday: [],
+        thursday: [],
+        friday: []
+      });
+    }
+  }, [selectedRecruitment, user]);
+
 
   const calculateUsedPriority = () => {
+// ... (bez zmian)
+// ... (reszta funkcji bez zmian)
     let total = 0;
     days.forEach(day => {
       const validSlots = (scheduleData[day] || []).filter(Boolean);
@@ -48,36 +137,14 @@ export default function EntriesPage() {
   };
 
   const saveScheduleToFile = async () => {
-    try {
-      const response = await fetch('/api/save-schedule', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(scheduleData)
-      });
-
-      if (response.ok) {
-        alert('Harmonogram został zapisany pomyślnie!');
-      } else {
-        throw new Error('Błąd podczas zapisywania');
-      }
-    } catch (error) {
-      console.error('Error saving schedule:', error);
-      alert('Nie udało się zapisać harmonogramu. Używam zapisu lokalnego...');
-      
-      const dataStr = JSON.stringify(scheduleData, null, 2);
-      const dataBlob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(dataBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'schedule-data.json';
-      link.click();
-      URL.revokeObjectURL(url);
-    }
+    // TODO: Zmienić na wysyłanie danych do backendu (PUT /api/v1/preferences/user-preferences/...)
+    // Trzeba będzie transformować 'scheduleData' z powrotem na format 'preferences_data'
+    alert("Funkcja zapisywania preferencji nie jest jeszcze połączona z backendem.");
+    console.log("Zapisywanie danych (TODO):", scheduleData);
   };
-
+// ... (reszta funkcji bez zmian)
   const clearAllPreferences = () => {
+// ... (bez zmian)
     if (window.confirm('Czy na pewno chcesz usunąć wszystkie preferencje? Ta akcja jest nieodwracalna.')) {
       setScheduleData({
         monday: [],
@@ -90,57 +157,8 @@ export default function EntriesPage() {
     }
   };
 
-  useEffect(() => {
-    const loadScheduleData = async () => {
-      try {
-        const response = await fetch(JSON_FILE_PATH);
-        
-        if (!response.ok) {
-          throw new Error(`Failed to load file: ${response.statusText}`);
-        }
-
-        const jsonData = await response.json();
-        
-        if (typeof jsonData !== 'object') {
-          throw new Error('Invalid JSON structure: expected an object');
-        }
-
-        const validDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
-        const newScheduleData = {};
-
-        validDays.forEach(day => {
-          if (jsonData[day] && Array.isArray(jsonData[day])) {
-            newScheduleData[day] = jsonData[day].filter(Boolean).map(slot => {
-              if (!slot || !slot.start || !slot.end || !slot.type || !slot.label) {
-                console.warn(`Invalid slot structure in ${day}, skipping:`, slot);
-                return null;
-              }
-              return {
-                start: slot.start,
-                end: slot.end,
-                type: slot.type,
-                label: slot.label,
-                priority: slot.priority || 1
-              };
-            }).filter(Boolean);
-          } else {
-            newScheduleData[day] = [];
-          }
-        });
-
-        setScheduleData(newScheduleData);
-        setIsLoading(false);
-      } catch (error) {
-        setFileError(`Error loading schedule: ${error.message}`);
-        setIsLoading(false);
-        console.error('File loading error:', error);
-      }
-    };
-
-    loadScheduleData();
-  }, []);
-
   const getPositionInfo = (e, columnElement) => {
+// ... (bez zmian)
     if (!columnElement) {
       return { time: "NaN:NaN", minutes: NaN };
     }
@@ -182,6 +200,7 @@ export default function EntriesPage() {
   };
 
   const handleMouseDown = (e, day, columnIndex) => {
+// ... (bez zmian)
     if (e.button !== 0) return;
     
     const column = e.currentTarget;
@@ -199,6 +218,7 @@ export default function EntriesPage() {
   };
 
   const handleMouseMove = (e) => {
+// ... (bez zmian)
     if (!isDragging || !dragDay) return;
     
     const columns = document.querySelectorAll('.schedule-column');
@@ -214,6 +234,7 @@ export default function EntriesPage() {
   };
 
   const handleMouseUp = () => {
+// ... (bez zmian)
     if (!isDragging || !dragStart || !dragEnd || !dragDay || isNaN(dragStart.minutes) || isNaN(dragEnd.minutes)) {
       setIsDragging(false);
       setDragStart(null);
@@ -250,6 +271,7 @@ export default function EntriesPage() {
   };
 
   const handleSlotClick = (e, day, slotIndex) => {
+// ... (bez zmian)
     e.stopPropagation();
     const slot = scheduleData[day][slotIndex];
     if (!slot) return;
@@ -265,6 +287,7 @@ export default function EntriesPage() {
   };
 
   const handleAddSlot = () => {
+// ... (bez zmian)
     if (!pendingSlot) return;
 
     const label = pendingSlot.type === 'prefer' ? 'Chce mieć zajęcia' : 'Brak zajęć';
@@ -305,6 +328,7 @@ export default function EntriesPage() {
   };
 
   const handleUpdateSlot = () => {
+// ... (bez zmian)
     if (!editingSlot) return;
 
     const label = editingSlot.type === 'prefer' ? 'Chce mieć zajęcia' : 'Brak zajęć';
@@ -330,6 +354,7 @@ export default function EntriesPage() {
   };
 
   const handleDeleteSlot = () => {
+// ... (bez zmian)
     if (!editingSlot) return;
 
     setScheduleData(prev => {
@@ -346,6 +371,7 @@ export default function EntriesPage() {
   };
 
   const handleCloseModal = () => {
+// ... (bez zmian)
     setShowModal(false);
     setPendingSlot(null);
     setEditingSlot(null);
@@ -355,6 +381,7 @@ export default function EntriesPage() {
   };
 
   useEffect(() => {
+// ... (bez zmian)
     if (isDragging) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
@@ -367,6 +394,7 @@ export default function EntriesPage() {
   }, [isDragging, dragStart, dragEnd, dragDay]);
 
   const getDragPreview = () => {
+// ... (bez zmian)
     if (!isDragging || !dragStart || !dragEnd || !dragDay || isNaN(dragStart.minutes) || isNaN(dragEnd.minutes)) {
       return null;
     }
@@ -394,18 +422,31 @@ export default function EntriesPage() {
       <div className="entries-content">
         <div className="entries-main">
           <EntriesSidebar
-            fileError={fileError}
+            fileError={fetchError}
             onSave={saveScheduleToFile}
             onClear={clearAllPreferences}
+            recruitments={recruitments}
+            isLoading={isLoadingRecruitments}
+            selectedRecruitment={selectedRecruitment}
+            onSelectRecruitment={setSelectedRecruitment}
           />
           <main className="entries-schedule">
-            {isLoading ? (
+            {isLoadingRecruitments ? (
               <div className="entries-loading-indicator">
-              <p>Ładowanie harmonogramu...</p>
-             </div>
+                <p>Ładowanie rekrutacji...</p>
+              </div>
+            ) : !selectedRecruitment ? (
+              <div className="entries-loading-indicator">
+                <p>Proszę wybrać rekrutację z listy po lewej stronie.</p>
+              </div>
+            ) : isLoadingSchedule ? (
+              <div className="entries-loading-indicator">
+                <p>Ładowanie preferencji dla {selectedRecruitment.recruitment_name}...</p>
+              </div>
             ) : (
               <React.Fragment>
                 <ScheduleHeader
+                  selectedRecruitment={selectedRecruitment}
                   usedPriority={calculateUsedPriority()}
                   maxPriority={maxPriority}
                 />
@@ -427,7 +468,7 @@ export default function EntriesPage() {
                           key={day}
                           day={day}
                           slots={(scheduleData[day] || []).filter(Boolean)}
-                            dragPreview={(isDragging && dragDay === day) ? getDragPreview() : null}
+                          dragPreview={(isDragging && dragDay === day) ? getDragPreview() : null}
                           onMouseDown={(e) => handleMouseDown(e, day, index)}
                           onSlotClick={handleSlotClick}
                         />
@@ -457,4 +498,3 @@ export default function EntriesPage() {
     </div>
   );
 }
-
