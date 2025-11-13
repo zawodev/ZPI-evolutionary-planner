@@ -1,116 +1,153 @@
-OptiSlots: The Evolutionary Timetabling System
+# OptiSlots: The Evolutionary Timetabling System
 
-Optislots is a powerful, web-based timetabling solution designed for complex organizations like universities and large businesses. It uses a high-performance C++ evolutionary algorithm to automatically generate optimal schedules based on a wide range of constraints and user preferences.
+**OptiSlots** is a web-based timetabling system designed for complex organizations such as universities and large enterprises.  
+It uses a high-performance **C++ evolutionary algorithm** to automatically generate optimal schedules based on multiple constraints and user preferences.
 
-Key Features
 
-Evolutionary Optimization: Utilizes a C++ genetic algorithm backend for high-speed, efficient schedule computation.
 
-Preference-Based Scheduling: Allows users (e.g., students, teachers) to submit their availability and preferences (e.g., "prefer morning classes," "avoid gaps") via a simple web interface.
+## Key Features
 
-Multi-Tenancy: Manages multiple organizations, users, and groups, each with its own set of rules and constraints.
+### Evolutionary Optimization
+High-speed C++ genetic algorithm backend ensures efficient and scalable schedule computation.
 
-Asynchronous Job Processing: Optimization tasks are handled as background jobs, allowing the system to remain responsive. Users can view the progress of optimization in real-time.
+### Preference-Based Scheduling
+Users (students, teachers, employees) can define their availability and preferences  
+(e.g. "prefer morning classes", "avoid gaps") through a simple web interface.
 
-Modern Tech Stack: Built with a React/Next.js frontend, a Django backend, and a C++ optimization service, all orchestrated with Docker and Redis.
+### Multi-Tenancy
+Supports multiple organizations, each with isolated users, rooms, subjects, and constraints.
 
-System Architecture
+### Asynchronous Job Processing
+Optimization tasks run as background jobs. The system remains responsive, and users can monitor progress in real time.
 
-The project operates on a microservice-based architecture:
+### Modern Tech Stack
+Built with **React/Next.js**, **Django**, **C++**, **Redis**, and **Docker** for performance and modularity.
 
-Frontend (/frontend/evoplanner_frontend): A Next.js (React) application that provides the user interface. Users log in, view their assigned "Recruitments" (e.g., "Fall Semester 2025"), and submit their scheduling preferences on a visual grid.
 
-Backend (/backend): A Django application that serves as the main API and data hub. It manages user identity, organizations, rooms, subjects, and constraints.
+## System Architecture
 
-Optimizer Service (/optimizer_service): A standalone C++ application that contains the core genetic algorithm. It's built for high performance to handle complex optimization problems.
+EvoPlanner follows a **microservice-based architecture** with several main components:
 
-Redis (via docker-compose.yml): Acts as the message broker between the Backend and the Optimizer Service.
+### Frontend – `/frontend/evoplanner_frontend`
+A **Next.js (React)** application providing the user interface:
+- Users log in and manage their schedules.
+- Submit preferences visually on a grid.
+- View optimization progress and final timetables.
 
-How it Works: The Optimization Workflow
+### Backend – `/backend`
+A **Django** application serving as the central API and data hub:
+- Manages users, organizations, subjects, rooms, and constraints.
+- Handles optimization jobs and data flow between components.
+- Sends progress updates to the frontend via WebSockets.
 
-Job Submission: An administrator (or an automated scheduler) triggers an optimization for a specific "Recruitment."
+### Optimizer Service – `/optimizer_service`
+A standalone **C++** service that implements the genetic algorithm:
+- Listens for new jobs from Redis (`optimizer:jobs`).
+- Runs the optimization process.
+- Publishes progress updates (`optimizer:progress:updates`).
+- Returns the final optimized schedule as a JSON object.
 
-The Django Backend compiles all relevant data (user preferences, constraints, room capacities, etc.) into a JSON problem definition.
+### Redis
+Acts as the **message broker** between services, handling:
+- Job queues.
+- Real-time pub/sub updates.
 
-This problem is placed as a job onto a Redis queue (optimizer:jobs).
 
-The C++ Optimizer Service is continuously listening to this queue. It dequeues the job and starts the evolutionary algorithm.
+## Optimization Workflow
 
-Real-time Progress: As the algorithm runs, the C++ service publishes progress updates (e.g., current iteration, best fitness score) to a Redis pub/sub channel (optimizer:progress:updates).
+1. **Job Submission**  
+   An administrator triggers a job for a specific "Recruitment" (e.g., "Fall Semester 2025").
 
-A separate Django background worker (listen_progress) subscribes to this channel. It receives the updates and saves them to the database, forwarding them to the frontend via WebSockets.
+2. **Problem Definition**  
+   The Django backend compiles all relevant data (preferences, constraints, capacities, etc.) into a JSON definition.
 
-Completion: Once the optimization is complete (or hits the time limit), the C++ service publishes the final, optimized schedule (the "fittest individual") as a JSON object. The listener saves this solution, and the final schedule becomes available to all users in the frontend.
+3. **Queue Dispatch**  
+   The job is sent to the Redis queue (`optimizer:jobs`).
 
-Getting Started
+4. **Evolutionary Optimization**  
+   The C++ optimizer dequeues the job, runs the algorithm, and continuously improves schedule quality.
 
-Prerequisites
+5. **Progress Tracking**  
+   The optimizer publishes live updates (iteration, fitness score) to a Redis channel.  
+   A Django listener saves these updates and forwards them to the frontend.
 
-Docker and Docker Compose
+6. **Completion**  
+   When finished, the optimizer sends the best-found schedule to Django, which stores it and makes it visible in the frontend.
 
-Node.js (v18 or later) and npm
 
-1. Running the Application (Docker)
+## Getting Started
 
-The entire backend stack (Django API, C++ Optimizer, background workers, and Redis) is managed by Docker Compose. The frontend is run locally for development.
+### Prerequisites
+- Docker and Docker Compose  
+- Node.js (v18 or later) and npm  
 
-Step 1: Start the Backend Services
+---
 
-This single command will build and start the backend, optimizer, progress-listener, scheduler, and redis services in detached mode.
+### 1. Running the Application with Docker
 
+Start the entire backend stack (Django API, C++ optimizer, background workers, and Redis) using:
+
+```bash
 docker compose up -d
+```
 
+Then, in another terminal, start the frontend:
 
-Step 2: Start the Frontend
-
-In a separate terminal, navigate to the frontend directory, install dependencies, and run the development server.
-
+```bash
 cd frontend/evoplanner_frontend
 npm install
 npm run dev
+```
+
+The application will be available at:
+- Frontend: http://localhost:3000￼
+- Backend: http://localhost:8000￼
 
 
-The frontend will be available at http://localhost:3000.
-The Django API will be available at http://localhost:8000.
+### 2. Manual Backend Development (Without Docker)
 
-2. Manual Backend Development (Without Docker)
+Run each component manually in separate terminals.
+A running Redis instance (local or via Docker) is required.
 
-If you prefer to run the Django services manually (e.g., for debugging), you can run each component in its own terminal. You must still have a Redis server running locally or in Docker.
+Terminal 1 – Django Core API:
 
-Terminal 1: Run Django Core API
-
+```bash
 cd backend
 python manage.py migrate
 python manage.py runserver
+```
 
+Terminal 2 – Scheduler:
 
-Terminal 2: Run Scheduler (Checks for jobs to trigger)
-
+```bash
 cd backend
 python manage.py run_scheduler --interval 30
+```
 
+Terminal 3 – Progress Listener:
 
-Terminal 3: Run Progress Listener (Listens for C++ updates)
-
+```bash
 cd backend
 python manage.py listen_progress
+```
 
+Terminal 4 – C++ Optimizer Service:
+(Compile with CMake before running)
 
-Terminal 4: Run C++ Optimizer Service
-(You must compile the C++ service first using CMake)
-
-cd optimizer_service/build # (or similar build directory)
+```bash
+cd optimizer_service/build
 ./optimizer_service
+```
 
 
-Utility Scripts
+## Utility Scripts
 
-Full System Cleanup
+### Full System Cleanup
 
-Warning: This will stop and delete all Docker containers, images, volumes, and networks on your system. Use with caution.
+**Warning:** This will stop and delete all Docker containers, images, volumes, and networks.  
+Use with caution to ensure a clean rebuild.
 
-This is useful for clearing out old data and ensuring a clean build.
-
+```bash
 # Stop all running containers
 docker stop $(docker ps -q) 2>/dev/null || true
 
@@ -127,3 +164,4 @@ docker volume rm $(docker volume ls -q) 2>/dev/null || true
 docker network prune -f
 docker builder prune -af
 docker system prune -a --volumes -f
+```
