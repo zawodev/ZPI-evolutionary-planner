@@ -3,6 +3,7 @@
 // Components
 import Navbar from "@/components/navbar/Navbar.js";
 import Background from "@/components/Background.js";
+import { AuthProvider } from "@/contexts/AuthContext.js";
 
 
 // Base styles
@@ -38,10 +39,10 @@ import "@/styles/layout/_schedule_grid.css";
 // Temporary styles
 export default function App({ Component, pageProps }) {
   return (
-    <>
+    <AuthProvider>
       <Background />
       <Navbar />
       <Component {...pageProps} />
-    </>
+    </AuthProvider>
   );
 }

@@ -1,51 +1,12 @@
 /* frontend/evoplanner_frontend/components/navbar/Navbar.js */
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
+import { useAuth } from '@/contexts/AuthContext.js';
 
 export default function Navbar() {
-  const [user, setUser] = useState(null);
-  const router = useRouter();
-
-  const checkUser = () => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        console.error("Failed to parse user from localStorage", e);
-        localStorage.removeItem('user');
-        setUser(null);
-      }
-    } else {
-      setUser(null);
-    }
-  };
-
-  useEffect(() => {
-    checkUser();
-  }, []);
-
-  useEffect(() => {
-    const handleRouteChange = () => {
-      checkUser();
-    };
-
-    router.events.on('routeChangeComplete', handleRouteChange);
-
-    return () => {
-      router.events.off('routeChangeComplete', handleRouteChange);
-    };
-  }, [router.events]);
+  const { user, logout } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
-    
-    setUser(null);
-    
-     router.push('/login');
+    logout();
   };
 
   return (
