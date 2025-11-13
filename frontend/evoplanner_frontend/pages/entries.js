@@ -15,7 +15,7 @@ export default function EntriesPage() {
   const [recruitments, setRecruitments] = useState([]);
   const [selectedRecruitment, setSelectedRecruitment] = useState(null);
   const [isLoadingRecruitments, setIsLoadingRecruitments] = useState(true);
-  const [fetchError, setFetchError] = useState(null);
+  const [fetchError, setFetchError] = useState(null); // Błąd ładowania rekrutacji LUB preferencji
 
   // Stan dla harmonogramu (preferencji)
   const [scheduleData, setScheduleData] = useState({
@@ -27,6 +27,9 @@ export default function EntriesPage() {
   });
 
   const [isLoadingSchedule, setIsLoadingSchedule] = useState(false); // Oddzielny stan ładowania dla preferencji
+  const [isSaving, setIsSaving] = useState(false); // Stan zapisywania zmian
+  const [saveError, setSaveError] = useState(null); // Błąd zapisywania zmian
+
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState(null);
   const [dragEnd, setDragEnd] = useState(null);
@@ -87,29 +90,51 @@ export default function EntriesPage() {
   // Efekt do ładowania preferencji, gdy zmieni się wybrana rekrutacja
   useEffect(() => {
     if (selectedRecruitment && user) {
-      // TODO: Zaimplementować pobieranie i transformację danych preferencji
-      // Na razie czyścimy dane i ustawiamy ładowanie
-      console.log(`Wybrano rekrutację: ${selectedRecruitment.recruitment_id}. Gotowy do pobrania preferencji.`);
-      
-      // Tutaj w przyszłości będzie fetch do:
-      // /api/v1/preferences/user-preferences/<recruitment_id>/<user_id>/
-      // i transformacja danych z PreferredTimeslots na format scheduleData
-      
-      setIsLoadingSchedule(true); // Ustaw ładowanie harmonogramu
-      
-      // Symulacja ładowania
-      setTimeout(() => {
-        // Na razie ładujemy puste dane, docelowo tu będzie transformacja
-        setScheduleData({
-          monday: [],
-          tuesday: [],
-          wednesday: [],
-          thursday: [],
-          friday: []
-        });
-        setIsLoadingSchedule(false); // Zakończ ładowanie harmonogramu
-      }, 500); // Usunąć timeout po implementacji fetch
+      const fetchPreferences = async () => {
+        setIsLoadingSchedule(true);
+        setFetchError(null); // Czyścimy błędy ładowania
+        setSaveError(null);  // Czyścimy błędy zapisu
+        const token = localStorage.getItem('access_token');
 
+        if (!token) {
+          setFetchError("Brak autoryzacji.");
+          setIsLoadingSchedule(false);
+          return;
+        }
+
+        try {
+          const response = await fetch(`http://127.0.0.1:8000/api/v1/preferences/user-preferences/${selectedRecruitment.recruitment_id}/${user.id}/`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          const emptySchedule = { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [] };
+
+          if (response.status === 404) {
+            // Nie znaleziono preferencji, ustaw domyślny pusty stan
+            setScheduleData(emptySchedule);
+          } else if (response.ok) {
+            const data = await response.json();
+            // Sprawdź, czy preferences_data istnieje i jest obiektem
+            if (data.preferences_data && typeof data.preferences_data === 'object' && !Array.isArray(data.preferences_data)) {
+              setScheduleData(data.preferences_data);
+            } else {
+              // Dane są puste lub w złym formacie, ustaw domyślny stan
+              setScheduleData(emptySchedule);
+            }
+          } else {
+            throw new Error(`Błąd ładowania preferencji: ${response.statusText}`);
+          }
+        } catch (error) {
+          setFetchError(error.message);
+          console.error('Błąd ładowania preferencji:', error);
+        } finally {
+          setIsLoadingSchedule(false);
+        }
+      };
+      fetchPreferences();
     } else {
       // Wyczyść dane, jeśli nie wybrano rekrutacji
       setScheduleData({
@@ -124,9 +149,8 @@ export default function EntriesPage() {
 
 
   const calculateUsedPriority = () => {
-// ... (bez zmian)
-// ... (reszta funkcji bez zmian)
     let total = 0;
+// ... (reszta funkcji bez zmian)
     days.forEach(day => {
       const validSlots = (scheduleData[day] || []).filter(Boolean);
       validSlots.forEach(slot => {
@@ -136,15 +160,54 @@ export default function EntriesPage() {
     return total;
   };
 
-  const saveScheduleToFile = async () => {
-    // TODO: Zmienić na wysyłanie danych do backendu (PUT /api/v1/preferences/user-preferences/...)
-    // Trzeba będzie transformować 'scheduleData' z powrotem na format 'preferences_data'
-    alert("Funkcja zapisywania preferencji nie jest jeszcze połączona z backendem.");
-    console.log("Zapisywanie danych (TODO):", scheduleData);
+  const savePreferences = async () => {
+    if (!selectedRecruitment || !user) {
+      setSaveError("Nie wybrano rekrutacji lub użytkownika.");
+      return;
+    }
+    
+    setIsSaving(true);
+    setSaveError(null);
+    const token = localStorage.getItem('access_token');
+
+    if (!token) {
+      setSaveError("Brak autoryzacji. Zaloguj się ponownie.");
+      setIsSaving(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/v1/preferences/user-preferences/${selectedRecruitment.recruitment_id}/${user.id}/`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        // Wysyłamy cały obiekt scheduleData jako 'preferences_data'
+        // Backend (views.py) wykryje, że to nie jest {path, value} i zapisze cały obiekt
+        body: JSON.stringify(scheduleData) 
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || `Błąd zapisu: ${response.statusText}`);
+      }
+
+      // Sukces
+      setSaveError(null); 
+      // Prosty alert dla użytkownika, można zastąpić ładniejszym powiadomieniem
+      alert('Zmiany zapisane pomyślnie!'); 
+
+    } catch (error) {
+      setSaveError(error.message);
+      console.error('Błąd zapisywania preferencji:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
-// ... (reszta funkcji bez zmian)
+
   const clearAllPreferences = () => {
-// ... (bez zmian)
+// ... (reszta funkcji bez zmian)
     if (window.confirm('Czy na pewno chcesz usunąć wszystkie preferencje? Ta akcja jest nieodwracalna.')) {
       setScheduleData({
         monday: [],
@@ -153,12 +216,14 @@ export default function EntriesPage() {
         thursday: [],
         friday: []
       });
-      alert('Wszystkie preferencje zostały usunięte.');
+      // TODO: Dodać wywołanie savePreferences() po wyczyszczeniu, aby zapisać pusty stan w bazie?
+      // savePreferences(); // Odkomentuj, jeśli wyczyszczenie ma być od razu zapisane
+      alert('Wszystkie preferencje zostały wyczyszczone. Kliknij "Zachowaj zmiany", aby zapisać.');
     }
   };
 
   const getPositionInfo = (e, columnElement) => {
-// ... (bez zmian)
+// ... (reszta funkcji bez zmian)
     if (!columnElement) {
       return { time: "NaN:NaN", minutes: NaN };
     }
@@ -200,7 +265,7 @@ export default function EntriesPage() {
   };
 
   const handleMouseDown = (e, day, columnIndex) => {
-// ... (bez zmian)
+// ... (reszta funkcji bez zmian)
     if (e.button !== 0) return;
     
     const column = e.currentTarget;
@@ -218,7 +283,7 @@ export default function EntriesPage() {
   };
 
   const handleMouseMove = (e) => {
-// ... (bez zmian)
+// ... (reszta funkcji bez zmian)
     if (!isDragging || !dragDay) return;
     
     const columns = document.querySelectorAll('.schedule-column');
@@ -234,7 +299,7 @@ export default function EntriesPage() {
   };
 
   const handleMouseUp = () => {
-// ... (bez zmian)
+// ... (reszta funkcji bez zmian)
     if (!isDragging || !dragStart || !dragEnd || !dragDay || isNaN(dragStart.minutes) || isNaN(dragEnd.minutes)) {
       setIsDragging(false);
       setDragStart(null);
@@ -271,7 +336,7 @@ export default function EntriesPage() {
   };
 
   const handleSlotClick = (e, day, slotIndex) => {
-// ... (bez zmian)
+// ... (reszta funkcji bez zmian)
     e.stopPropagation();
     const slot = scheduleData[day][slotIndex];
     if (!slot) return;
@@ -287,7 +352,7 @@ export default function EntriesPage() {
   };
 
   const handleAddSlot = () => {
-// ... (bez zmian)
+// ... (reszta funkcji bez zmian)
     if (!pendingSlot) return;
 
     const label = pendingSlot.type === 'prefer' ? 'Chce mieć zajęcia' : 'Brak zajęć';
@@ -328,7 +393,7 @@ export default function EntriesPage() {
   };
 
   const handleUpdateSlot = () => {
-// ... (bez zmian)
+// ... (reszta funkcji bez zmian)
     if (!editingSlot) return;
 
     const label = editingSlot.type === 'prefer' ? 'Chce mieć zajęcia' : 'Brak zajęć';
@@ -354,7 +419,7 @@ export default function EntriesPage() {
   };
 
   const handleDeleteSlot = () => {
-// ... (bez zmian)
+// ... (reszta funkcji bez zmian)
     if (!editingSlot) return;
 
     setScheduleData(prev => {
@@ -371,7 +436,7 @@ export default function EntriesPage() {
   };
 
   const handleCloseModal = () => {
-// ... (bez zmian)
+// ... (reszta funkcji bez zmian)
     setShowModal(false);
     setPendingSlot(null);
     setEditingSlot(null);
@@ -381,7 +446,7 @@ export default function EntriesPage() {
   };
 
   useEffect(() => {
-// ... (bez zmian)
+// ... (reszta funkcji bez zmian)
     if (isDragging) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
@@ -394,7 +459,7 @@ export default function EntriesPage() {
   }, [isDragging, dragStart, dragEnd, dragDay]);
 
   const getDragPreview = () => {
-// ... (bez zmian)
+// ... (reszta funkcji bez zmian)
     if (!isDragging || !dragStart || !dragEnd || !dragDay || isNaN(dragStart.minutes) || isNaN(dragEnd.minutes)) {
       return null;
     }
@@ -422,13 +487,14 @@ export default function EntriesPage() {
       <div className="entries-content">
         <div className="entries-main">
           <EntriesSidebar
-            fileError={fetchError}
-            onSave={saveScheduleToFile}
+            fileError={fetchError || saveError} // Wyświetlamy błąd ładowania lub zapisu
+            onSave={savePreferences} // Zaktualizowana funkcja zapisu
             onClear={clearAllPreferences}
             recruitments={recruitments}
             isLoading={isLoadingRecruitments}
             selectedRecruitment={selectedRecruitment}
             onSelectRecruitment={setSelectedRecruitment}
+            isSaving={isSaving} // Przekazanie stanu zapisywania
           />
           <main className="entries-schedule">
             {isLoadingRecruitments ? (

@@ -38,7 +38,7 @@ export default function EntriesSidebar({
             </div>
           ))
         ) : (
-          !isLoading && !fileError && <div className="entries-item">Brak nadchodzących rekrutacji</div>
+          !isLoading && !fileError && <div className="entries-item">Brak nadchodzących rekrutacji.</div>
         )}
       </div>
       <div className="entries-section">
@@ -58,7 +58,7 @@ export default function EntriesSidebar({
             </div>
           ))
         ) : (
-          !isLoading && !fileError && <div className="entries-item">Brak zakończonych rekrutacji</div>
+          !isLoading && !fileError && <div className="entries-item">Brak zakończonych rekrutacji.</div>
         )}
       </div>
       <div className="entries-section">
