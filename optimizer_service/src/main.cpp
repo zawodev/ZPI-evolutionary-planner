@@ -33,7 +33,7 @@ void processJob(EventReceiver& receiver, EventSender& sender) {
     Logger::info(debugMsg);
 
     Evaluator evaluator(data);
-    std::unique_ptr<IGeneticAlgorithm> geneticAlgorithm = std::make_unique<ZawodevGeneticAlgorithm>();
+    std::unique_ptr<IGeneticAlgorithm> geneticAlgorithm = std::make_unique<ExampleGeneticAlgorithm>();
     Logger::info("Using genetic algorithm: " + std::string(typeid(*geneticAlgorithm).name()));
     
     //int seed = 42;
