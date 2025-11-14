@@ -15,15 +15,18 @@ def get_active_meetings_for_user(user_or_id: Union[User, int, str]) -> QuerySet:
     """
     user_id = user_or_id.pk if hasattr(user_or_id, 'pk') else user_or_id
 
+    # Get groups the user belongs to
+    user_groups = Group.objects.filter(group_users__user_id=user_id)
+
     qs = (
         Meeting.objects
         .filter(
             Q(subject_group__host_user_id=user_id) |
-            Q(subject_group__group__group_users__user_id=user_id),
+            Q(group__in=user_groups),
             recruitment__plan_status='active'
         )
-        .select_related('recruitment', 'subject_group__subject', 'subject_group__group', 'subject_group__host_user', 'room')
-        .order_by('day_of_week', 'start_hour')
+        .select_related('recruitment', 'subject_group__subject', 'subject_group__host_user', 'room', 'group')
+        .order_by('day_of_week', 'start_timeslot')
         .distinct()
     )
     return qs
